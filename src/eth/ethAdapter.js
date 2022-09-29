@@ -227,13 +227,6 @@ class EthAdapter {
      */
     async connectToWeb3Wallet(cb) {
         try {
-            // Lookup Contract Addresses
-            for (const contract in this.contracts) {
-                console.log(contract)
-                let address = await this._lookupContractName(contract);
-                this.addressesFromFactory[contract] = address;
-            }
-
             this.provider = new ethers.providers.Web3Provider(window.ethereum, "any"); // Establish connection to injected wallet
             this.accounts = await this.provider.send("eth_requestAccounts", []); // Request accounts
             this.signer = this.provider.getSigner(); // Get the signer
@@ -242,6 +235,13 @@ class EthAdapter {
             store.dispatch(APPLICATION_ACTIONS.setConnectedAddress(connectedAddress));
             console.log(this.contracts)
             
+            // Lookup Contract Addresses
+            for (const contract in this.contracts) {
+                console.log(contract)
+                // let address = await this._lookupContractName(contract);
+                let address = this._lookupContractName(contract);
+                this.addressesFromFactory[contract] = address;
+            }
             
             // Setup balance listener
             await this._balanceLoop();
