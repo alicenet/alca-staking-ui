@@ -233,6 +233,7 @@ class EthAdapter {
             let connectedAddress = await this._getAddressByIndex(0);
             store.dispatch(APPLICATION_ACTIONS.updateNetwork(String(parseInt(window.ethereum.chainId, 16))));
             store.dispatch(APPLICATION_ACTIONS.setConnectedAddress(connectedAddress));
+            console.log(this.contracts)
             
             // Lookup Contract Addresses
             for (let contract in this.contracts) {
