@@ -208,8 +208,9 @@ class EthAdapter {
     }
 
     async _lookupContractName(cName) {
-        console.log(cName, CONTRACT_NAMES.Factory)
+        console.log("salt parameter", ethers.utils.formatBytes32String(cName), "CONTRACTNAMETOCALL", CONTRACT_NAMES.Factory)
         const contractAddress = await this._tryCall(CONTRACT_NAMES.Factory, "lookup", [ethers.utils.formatBytes32String(cName)]);
+        console.log("ADDRESS", contractAddress)
         return contractAddress;
     }
 
