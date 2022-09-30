@@ -208,10 +208,8 @@ class EthAdapter {
     }
 
     async _lookupContractName(cName) {
-        console.log(cName, CONTRACT_NAMES.Factory)
         const contractAddress = await this._tryCall(CONTRACT_NAMES.Factory, "lookup", [ethers.utils.formatBytes32String(cName)]);
-        const testAddress = await this.provider.getCode(contractAddress);
-        console.log({cName, contractAddress, testAddress})
+        console.log({ cName, contractAddress })
         return contractAddress;
     }
 
@@ -238,7 +236,6 @@ class EthAdapter {
             
             // Lookup Contract Addresses
             for (const contract in this.contracts) {
-                console.log(contract)
                 let address = await this._lookupContractName(contract);
                 this.addressesFromFactory[contract] = address;
             }
