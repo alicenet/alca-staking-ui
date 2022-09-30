@@ -235,10 +235,10 @@ class EthAdapter {
             console.log(this.contracts)
             
             // Lookup Contract Addresses
-            for (const contract in this.contracts) {
-                let address = await this._lookupContractName(contract);
-                this.addressesFromFactory[contract] = address;
-            }
+            // for (const contract in this.contracts) {
+            //     let address = await this._lookupContractName(contract);
+            //     this.addressesFromFactory[contract] = address;
+            // }
             
             // Setup balance listener
             await this._balanceLoop();
