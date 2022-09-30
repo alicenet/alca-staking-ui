@@ -237,7 +237,7 @@ class EthAdapter {
             
             // Lookup Contract Addresses
             for (let contract in this.contracts) {
-                console.log(contract)
+                if (contract === "Factory") { continue }
                 let address = await this._lookupContractName(contract);
                 this.addressesFromFactory[contract] = address;
             }
