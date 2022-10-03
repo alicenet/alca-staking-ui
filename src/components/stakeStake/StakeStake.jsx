@@ -3,7 +3,7 @@ import ethAdapter from "eth/ethAdapter";
 import { ethers } from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
-import { Grid, Header, Input, Button } from "semantic-ui-react";
+import { Grid, Header, Input, Button, Label } from "semantic-ui-react";
 import { classNames } from "utils/generic";
 import { TOKEN_TYPES } from "redux/constants";
 
@@ -24,28 +24,28 @@ export function StakeStake() {
     const [allowanceMet, setAllowanceMet] = React.useState(false);
     const [hash, setHash] = React.useState("");
 
-    React.useEffect( () => {
+    React.useEffect(() => {
         setStakeAmt("")
     }, [])
 
     React.useEffect(() => {
         try {
-            if(!stakeAmt) return;
+            if (!stakeAmt) return;
             setStatus({});
             setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gt(ethers.utils.parseUnits(stakeAmt || "0", DECIMALS)));
-            if(ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
-                setStatus({ 
-                    error: true, 
+            if (ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
+                setStatus({
+                    error: true,
                     message: "Stake amount higher than current balance"
                 });
             }
         } catch (exc) {
-            setStatus({ 
-                error: true, 
-                message: "There was a problem with your input, please verify" 
+            setStatus({
+                error: true,
+                message: "There was a problem with your input, please verify"
             });
         }
-    // eslint-disable-next-line
+        // eslint-disable-next-line
     }, [stakeAmt]);
 
     const approveStaking = async () => {
@@ -59,16 +59,16 @@ export function StakeStake() {
 
             setWaiting(false);
             dispatch(APPLICATION_ACTIONS.updateBalances());
-            setStatus({ 
-                error: false, 
-                message: "Allowance granted to the Staking Contract, you can now stake ALCA" 
+            setStatus({
+                error: false,
+                message: "Allowance granted to the Staking Contract, you can now stake ALCA"
             });
             setHash(tx?.hash);
         } catch (exc) {
             setWaiting(false);
-            setStatus({ 
-                error: true, 
-                message: "There was a problem with your request, please verify or try again later" 
+            setStatus({
+                error: true,
+                message: "There was a problem with your request, please verify or try again later"
             });
         }
     }
@@ -94,22 +94,25 @@ export function StakeStake() {
         } catch (exc) {
             console.log('uhoh')
             setWaiting(false);
-            setStatus({ 
-                error: true, 
-                message: "There was a problem with your request, please verify or try again later" 
+            setStatus({
+                error: true,
+                message: "There was a problem with your request, please verify or try again later"
             });
         }
     }
 
     const StakingHeader = () => {
-        if(!status?.message || status.error) {
-            return (
+        if (!status?.message || status.error) {
+            return (<>
                 <Header>Stake your ALCA
                     <Header.Subheader>
                         {alcaBalance} available for staking
                     </Header.Subheader>
                 </Header>
-            )
+                <div className="text-xs font-bold">
+                    You will need to sign two transactions to stake your ALCA
+                </div>
+            </>)
         } else {
             return (
                 <Header>
@@ -128,7 +131,7 @@ export function StakeStake() {
     return (
         <Grid padded>
             <Grid.Column width={16}>
-                <StakingHeader/>
+                <StakingHeader />
             </Grid.Column>
 
             <Grid.Column width={16}>
@@ -136,7 +139,7 @@ export function StakeStake() {
                     <>
                         <div>
                             <Input
-                                placeholder="Amount to stake"
+                                placeholder={`Amount to stake`}
                                 value={stakeAmt}
                                 type="text"
                                 inputMode="decimal"
@@ -154,9 +157,9 @@ export function StakeStake() {
                                 className="mt-4"
                                 color="black"
                                 content={
-                                    (!alcaStakeAllowance || !stakeAmt) 
-                                        ? "Enter an amount" 
-                                        : allowanceMet ? "Stake ALCA" : "Allow ALCA*"
+                                    (!alcaStakeAllowance || !stakeAmt)
+                                        ? "Enter an amount"
+                                        : allowanceMet ? "Stake ALCA" : `Allow ${stakeAmt} ALCA`
                                 }
                                 onClick={allowanceMet ? stake : approveStaking}
                                 disabled={!stakeAmt || status?.error}
@@ -167,13 +170,7 @@ export function StakeStake() {
                     </>
                 )}
 
-                <div className={classNames("text-xs mt-8", { hidden: allowanceMet })}>
-                    *Prior to your first staked position you will be asked to approve the Staking Contract a large amount of tokens.
-                    Wallets like metamask will allow you to change this amount, and you are more than welcome to, however additional approval 
-                    transactions will cost more in gas.
-                </div>
-
-                {status?.message && !status?.error && 
+                {status?.message && !status?.error &&
                     <div>
                         <Button
                             className="mt-4"
