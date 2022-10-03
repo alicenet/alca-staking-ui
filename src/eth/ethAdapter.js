@@ -189,6 +189,7 @@ class EthAdapter {
      */
     async _tryCall(contractName, methodName, params = []) {
         let contract = this._getReadonlyContractInstance(contractName);
+        console.log("TRY_CALL CONTRACT", contract);
         let result = await contract[methodName](...params);
         // If return is a BN parse and return the value string, else just return
         if (ethers.BigNumber.isBigNumber(result)) {
@@ -236,7 +237,7 @@ class EthAdapter {
             
             // Lookup Contract Addresses
             for (let contract in this.contracts) {
-                console.log(contract)
+                if (contract === "Factory") { continue }
                 let address = await this._lookupContractName(contract);
                 this.addressesFromFactory[contract] = address;
             }
