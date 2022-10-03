@@ -189,7 +189,6 @@ class EthAdapter {
      */
     async _tryCall(contractName, methodName, params = []) {
         let contract = this._getReadonlyContractInstance(contractName);
-        console.log("TRY_CALL CONTRACT", contract);
         let result = await contract[methodName](...params);
         // If return is a BN parse and return the value string, else just return
         if (ethers.BigNumber.isBigNumber(result)) {
@@ -209,9 +208,8 @@ class EthAdapter {
     }
 
     async _lookupContractName(cName) {
-        console.log("salt parameter", ethers.utils.formatBytes32String(cName), "CONTRACTNAMETOCALL", CONTRACT_NAMES.Factory)
         const contractAddress = await this._tryCall(CONTRACT_NAMES.Factory, "lookup", [ethers.utils.formatBytes32String(cName)]);
-        console.log("ADDRESS", contractAddress)
+        console.log({ cName, contractAddress });
         return contractAddress;
     }
 
@@ -384,16 +382,17 @@ class EthAdapter {
 
     /**
      * Send a approve request for AToken allowance
+     * @param { Number } amount - Amount to be allowed
      * @returns { Object }
      */
-    async sendStakingAllowanceRequest() {
+    async sendStakingAllowanceRequest(amount) {
         return await this._try(async () => {
             const tx = await this._trySend(
                 CONTRACT_NAMES.AToken, 
                 "approve", 
                 [
                     CONTRACT_ADDRESSES.PublicStaking, 
-                    ethers.BigNumber.from("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+                    ethers.utils.parseEther(amount)
                 ]
             )
             return tx;

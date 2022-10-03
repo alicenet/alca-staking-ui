@@ -3,8 +3,7 @@ import ethAdapter from "eth/ethAdapter";
 import { ethers } from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
-import { Grid, Header, Input, Button, Label } from "semantic-ui-react";
-import { classNames } from "utils/generic";
+import { Grid, Header, Input, Button } from "semantic-ui-react";
 import { TOKEN_TYPES } from "redux/constants";
 
 const DECIMALS = 18;
@@ -31,9 +30,12 @@ export function StakeStake() {
     React.useEffect(() => {
         try {
             if (!stakeAmt) return;
+            const parsedstakeAmt = ethers.utils.parseUnits(stakeAmt || "0", DECIMALS);
+
             setStatus({});
-            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gt(ethers.utils.parseUnits(stakeAmt || "0", DECIMALS)));
-            if (ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
+            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gt(parsedstakeAmt));
+
+            if (parsedstakeAmt.gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
                 setStatus({
                     error: true,
                     message: "Stake amount higher than current balance"
@@ -54,7 +56,7 @@ export function StakeStake() {
             setStatus({});
             setWaiting(true)
 
-            const tx = await ethAdapter.sendStakingAllowanceRequest();
+            const tx = await ethAdapter.sendStakingAllowanceRequest(stakeAmt);
             await tx.wait();
 
             setWaiting(false);
@@ -98,6 +100,17 @@ export function StakeStake() {
                 error: true,
                 message: "There was a problem with your request, please verify or try again later"
             });
+        }
+    }
+
+    console.log({ allowanceMet, alcaStakeAllowance, stakeAmt })
+
+    const handleStaking = () => {
+        if (allowanceMet) {
+            stake(); 
+        } else {
+            approveStaking(); 
+            stake(); 
         }
     }
 
@@ -161,7 +174,7 @@ export function StakeStake() {
                                         ? "Enter an amount"
                                         : allowanceMet ? "Stake ALCA" : `Allow ${stakeAmt} ALCA`
                                 }
-                                onClick={allowanceMet ? stake : approveStaking}
+                                onClick={handleStaking}
                                 disabled={!stakeAmt || status?.error}
                                 loading={waiting}
                             />

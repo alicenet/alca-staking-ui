@@ -39,6 +39,7 @@ const initialApplicationState = {
 };
 
 export default function applicationReducer(state = initialApplicationState, action) {
+    console.log({ state });
     switch (action.type) {
 
         case APPLICATION_ACTION_TYPES.SET_WEB3_CONNECTED:
