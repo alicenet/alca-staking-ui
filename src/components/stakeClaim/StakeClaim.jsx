@@ -102,7 +102,7 @@ export function StakeClaim() {
     )
 
     return (
-        <Grid>
+        <Grid padded>
             {success ? renderClaimedRewardSuccessfully() : renderClaimReward()}
         </Grid>
     )

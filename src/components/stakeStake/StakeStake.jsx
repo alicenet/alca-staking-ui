@@ -3,7 +3,7 @@ import ethAdapter from "eth/ethAdapter";
 import { ethers } from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
-import { Grid, Header, Input, Button } from "semantic-ui-react";
+import { Grid, Header, Input, Button, Dimmer, Loader } from "semantic-ui-react";
 import { TOKEN_TYPES } from "redux/constants";
 
 const DECIMALS = 18;
@@ -52,14 +52,9 @@ export function StakeStake() {
 
     const approveStaking = async () => {
         try {
-            setHash("");
-            setStatus({});
-            setWaiting(true)
-
             const tx = await ethAdapter.sendStakingAllowanceRequest(stakeAmt);
             await tx.wait();
 
-            setWaiting(false);
             dispatch(APPLICATION_ACTIONS.updateBalances());
             setStatus({
                 error: false,
@@ -67,7 +62,6 @@ export function StakeStake() {
             });
             setHash(tx?.hash);
         } catch (exc) {
-            setWaiting(false);
             setStatus({
                 error: true,
                 message: "There was a problem with your request, please verify or try again later"
@@ -77,10 +71,6 @@ export function StakeStake() {
 
     const stake = async () => {
         try {
-            setHash("");
-            setStatus({});
-            setWaiting(true)
-
             const tx = await ethAdapter.openStakingPosition(stakeAmt);
             const rec = await tx.wait();
 
@@ -91,11 +81,9 @@ export function StakeStake() {
                 setStatus({ error: false, message: "Stake completed" });
                 setHash(rec.transactionHash);
                 // setStakeAmt(""); // Was resetting a UI element to the user
-                setWaiting(false);
             }
         } catch (exc) {
             console.log('uhoh')
-            setWaiting(false);
             setStatus({
                 error: true,
                 message: "There was a problem with your request, please verify or try again later"
@@ -105,13 +93,17 @@ export function StakeStake() {
 
     console.log({ allowanceMet, alcaStakeAllowance, stakeAmt })
 
-    const handleStaking = () => {
+    const handleStaking = async () => {
+        setHash("");
+        setStatus({});
+        setWaiting(true);
         if (allowanceMet) {
-            stake(); 
+            await stake(); 
         } else {
-            approveStaking(); 
-            stake(); 
+            await approveStaking(); 
+            await stake(); 
         }
+        setWaiting(false);
     }
 
     const StakingHeader = () => {
@@ -143,6 +135,12 @@ export function StakeStake() {
 
     return (
         <Grid padded>
+            {waiting && (
+                <Dimmer inverted active>
+                    <Loader indeterminate>Loading Transaction..</Loader>
+                </Dimmer>
+            )}
+
             <Grid.Column width={16}>
                 <StakingHeader />
             </Grid.Column>

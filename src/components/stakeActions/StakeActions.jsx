@@ -39,7 +39,7 @@ export function StakeActions() {
                 <Grid padded className="flex h-full">
 
                     <Grid.Row>
-                        <Grid.Column width={3}>
+                        <Grid.Column stretched width={3} className="pr-0">
                             <Menu fluid vertical tabular>
                                 <Menu.Item
                                     content={web3Connected ? <>
@@ -93,8 +93,8 @@ export function StakeActions() {
                             </Menu>
                         </Grid.Column>
 
-                        <Grid.Column stretched width={13}>
-                            <Segment>
+                        <Grid.Column stretched width={13} className="pl-0">
+                            <Segment className="border-l-0 shadow-none rounded-none">
                                 {getActiveTab()}
                             </Segment>
                         </Grid.Column>
