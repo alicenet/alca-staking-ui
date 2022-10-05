@@ -17,15 +17,16 @@ export function StakeStake() {
     }))
 
     const dispatch = useDispatch();
-    const [stakeAmt, setStakeAmt] = React.useState("");
+    const [stakeAmt, setStakeAmt] = React.useState('');
     const [waiting, setWaiting] = React.useState(false);
     const [status, setStatus] = React.useState({});
     const [allowanceMet, setAllowanceMet] = React.useState(false);
-    const [hash, setHash] = React.useState("");
+    const [hash, setHash] = React.useState('');
+    const [multipleTx, setMultipleTx] = React.useState('');
 
     React.useEffect(() => {
-        setStakeAmt("")
-    }, [])
+        setStakeAmt('');
+    },[])
 
     React.useEffect(() => {
         try {
@@ -53,14 +54,16 @@ export function StakeStake() {
     const approveStaking = async () => {
         try {
             const tx = await ethAdapter.sendStakingAllowanceRequest(stakeAmt);
-            await tx.wait();
+            const rec = await tx.wait();
 
-            dispatch(APPLICATION_ACTIONS.updateBalances());
-            setStatus({
-                error: false,
-                message: "Allowance granted to the Staking Contract, you can now stake ALCA"
-            });
-            setHash(tx?.hash);
+            if (rec.transactionHash) {
+                setStatus({
+                    error: false,
+                    message: "Allowance granted to the Staking Contract, you can now stake ALCA"
+                });
+                setMultipleTx('1/2 completed');
+                setHash(rec.transactionHash);
+            }
         } catch (exc) {
             setStatus({
                 error: true,
@@ -75,15 +78,11 @@ export function StakeStake() {
             const rec = await tx.wait();
 
             if (rec.transactionHash) {
-                console.log("hit 1");
-                await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
-                console.log("hit 2");
                 setStatus({ error: false, message: "Stake completed" });
+                setMultipleTx('All transactions completed');
                 setHash(rec.transactionHash);
-                // setStakeAmt(""); // Was resetting a UI element to the user
             }
         } catch (exc) {
-            console.log('uhoh')
             setStatus({
                 error: true,
                 message: "There was a problem with your request, please verify or try again later"
@@ -91,20 +90,29 @@ export function StakeStake() {
         }
     }
 
-    console.log({ allowanceMet, alcaStakeAllowance, stakeAmt })
-
     const handleStaking = async () => {
-        setHash("");
-        setStatus({});
         setWaiting(true);
+        setHash('');
+        setMultipleTx('');
+        setStatus({});
+        
         if (allowanceMet) {
             await stake(); 
         } else {
             await approveStaking(); 
             await stake(); 
         }
+
+        await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
+        setStakeAmt('');
         setWaiting(false);
     }
+
+    console.log({ 
+        allowanceMet, 
+        alcaStakeAllowance, 
+        stakeAmt 
+    });
 
     const StakingHeader = () => {
         if (!status?.message || status.error) {
@@ -137,7 +145,7 @@ export function StakeStake() {
         <Grid padded>
             {waiting && (
                 <Dimmer inverted active>
-                    <Loader indeterminate>Loading Transaction..</Loader>
+                    <Loader indeterminate>{multipleTx ? multipleTx : 'Processing Transaction..'}</Loader>
                 </Dimmer>
             )}
 
@@ -176,7 +184,13 @@ export function StakeStake() {
                                 disabled={!stakeAmt || status?.error}
                                 loading={waiting}
                             />
-                            <div className="cursor-pointer text-xs mt-4 underline" onClick={() => window.open(`${process.env.REACT_APP__ABOUT_STAKE_URL}`, '_blank').focus()}>About ALCA Staked rewards</div>
+
+                            <div 
+                                className="cursor-pointer text-xs mt-4 underline" 
+                                onClick={() => window.open(`${process.env.REACT_APP__ABOUT_STAKE_URL}`, '_blank').focus()}
+                            >
+                                About ALCA Staked rewards
+                            </div>
                         </div>
                     </>
                 )}
