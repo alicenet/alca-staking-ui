@@ -3,14 +3,13 @@ import ethAdapter from "eth/ethAdapter";
 import { ethers } from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
-import { Grid, Header, Input, Button, Dimmer, Loader } from "semantic-ui-react";
+import { Grid, Header, Input, Button, Dimmer, Loader, Message } from "semantic-ui-react";
 import { TOKEN_TYPES } from "redux/constants";
 
 const DECIMALS = 18;
 const ETHERSCAN_URL = process.env.REACT_APP__ETHERSCAN_TX_URL || "https://etherscan.io/tx/";
 
 export function StakeStake() {
-
     const { alcaBalance, alcaStakeAllowance } = useSelector(state => ({
         alcaBalance: state.application.balances.alca,
         alcaStakeAllowance: state.application.allowances.alcaStakeAllowance
@@ -48,91 +47,83 @@ export function StakeStake() {
                 message: "There was a problem with your input, please verify"
             });
         }
-        // eslint-disable-next-line
-    }, [stakeAmt]);
+    }, [stakeAmt, alcaBalance, alcaStakeAllowance]);
 
     const approveStaking = async () => {
-        try {
-            const tx = await ethAdapter.sendStakingAllowanceRequest(stakeAmt);
-            const rec = await tx.wait();
+        const tx = await ethAdapter.sendStakingAllowanceRequest(stakeAmt);
+        if (tx.error) throw tx.error;
+        const rec = tx.hash && await tx.wait();
 
-            if (rec.transactionHash) {
-                setStatus({
-                    error: false,
-                    message: "Allowance granted to the Staking Contract, you can now stake ALCA"
-                });
-                setMultipleTx('1/2 completed');
-                setHash(rec.transactionHash);
-            }
-        } catch (exc) {
+        if (rec.transactionHash) {
+            setHash(rec.transactionHash);
+            setMultipleTx('1/2 completed');
             setStatus({
-                error: true,
-                message: "There was a problem with your request, please verify or try again later"
+                error: false,
+                message: "Allowance granted to the Staking Contract, you can now stake ALCA"
             });
         }
     }
 
     const stake = async () => {
-        try {
-            const tx = await ethAdapter.openStakingPosition(stakeAmt);
-            const rec = await tx.wait();
+        const tx = await ethAdapter.openStakingPosition(stakeAmt);
+        if (tx.error) throw tx.error;
+        const rec = await tx.wait();
 
-            if (rec.transactionHash) {
-                setStatus({ error: false, message: "Stake completed" });
-                setMultipleTx('All transactions completed');
-                setHash(rec.transactionHash);
-            }
-        } catch (exc) {
-            setStatus({
-                error: true,
-                message: "There was a problem with your request, please verify or try again later"
-            });
+        if (rec.transactionHash) {
+            await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
+            setHash(rec.transactionHash);
+            setStakeAmt('');
+            setStatus({ error: false, message: "Stake completed" });
         }
     }
 
     const handleStaking = async () => {
-        setWaiting(true);
-        setHash('');
-        setMultipleTx('');
-        setStatus({});
-        
-        if (allowanceMet) {
-            await stake(); 
-        } else {
-            await approveStaking(); 
-            await stake(); 
+        try {
+            setWaiting(true);
+            setHash('');
+            setMultipleTx('');
+            setStatus({});
+            
+            if (allowanceMet) await stake(); 
+            
+            if (!allowanceMet) {
+                await approveStaking(); 
+                await stake(); 
+            }
+
+            setWaiting(false);
+        } catch (exception) {
+            setStatus({
+                error: true,
+                message: exception || "There was a problem with your request, please verify or try again later"
+            });
+            setWaiting(false);
         }
-
-        await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
-        setStakeAmt('');
-        setWaiting(false);
     }
-
-    console.log({ 
-        allowanceMet, 
-        alcaStakeAllowance, 
-        stakeAmt 
-    });
 
     const StakingHeader = () => {
         if (!status?.message || status.error) {
-            return (<>
-                <Header>Stake your ALCA
-                    <Header.Subheader>
-                        {alcaBalance} available for staking
-                    </Header.Subheader>
-                </Header>
-                <div className="text-xs font-bold">
-                    You will need to sign two transactions to stake your ALCA
-                </div>
-            </>)
+            return (
+                <>
+                    <Header>Stake your ALCA
+                        <Header.Subheader>
+                            {alcaBalance} available for staking
+                        </Header.Subheader>
+                    </Header>
+                    <div className="text-xs font-bold">
+                        You will need to sign two transactions to stake your ALCA
+                    </div>
+                </>
+            )
         } else {
             return (
                 <Header>
-                    {status?.message}
+                    <div>{status?.message}</div>
+
                     <div className="mt-4 mb-4 text-base">
-                        You have successfully staked {stakeAmt} ALCA
+                        You have successfully {`${status?.message === "Stake completed" ? 'staked': 'allowed'} ${stakeAmt}`} ALCA
                     </div>
+
                     <Header.Subheader>
                         You can check the transaction hash below {hash}
                     </Header.Subheader>
@@ -145,7 +136,9 @@ export function StakeStake() {
         <Grid padded>
             {waiting && (
                 <Dimmer inverted active>
-                    <Loader indeterminate>{multipleTx ? multipleTx : 'Processing Transaction..'}</Loader>
+                    <Loader indeterminate>
+                        {multipleTx ? multipleTx : 'Processing Transaction..'}
+                    </Loader>
                 </Dimmer>
             )}
 
@@ -181,8 +174,7 @@ export function StakeStake() {
                                         : allowanceMet ? "Stake ALCA" : `Allow ${stakeAmt} ALCA`
                                 }
                                 onClick={handleStaking}
-                                disabled={!stakeAmt || status?.error}
-                                loading={waiting}
+                                disabled={!stakeAmt}
                             />
 
                             <div 
@@ -206,6 +198,14 @@ export function StakeStake() {
                     </div>
                 }
             </Grid.Column>
+
+            {status.error && (
+                <Grid.Column width={16}>
+                    <Message negative>
+                        <p>{status.message}</p>
+                    </Message>
+                </Grid.Column>
+            )}
         </Grid>
     )
 }

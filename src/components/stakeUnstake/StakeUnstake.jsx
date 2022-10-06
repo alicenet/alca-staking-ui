@@ -2,7 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
 import ethAdapter from "eth/ethAdapter";
-import { Grid, Header, Button, Icon } from "semantic-ui-react";
+import { Grid, Header, Button, Icon, Message } from "semantic-ui-react";
 import utils from "utils";
 import { TOKEN_TYPES } from "redux/constants";
 
@@ -12,6 +12,7 @@ export function StakeUnstake() {
     const dispatch = useDispatch();
     const [waiting, setWaiting] = React.useState(false);
     const [success, setSuccessStatus] = React.useState(false);
+    const [status, setStatus] = React.useState({});
     const [txHash, setTxHash] = React.useState('');
     const [untakedAmount, setUnstakedAmount] = React.useState('');
     const [claimedRewards, setClaimedRewards] = React.useState('');
@@ -23,11 +24,12 @@ export function StakeUnstake() {
     }))
 
     const unstakePosition = async () => {
-        setWaiting(true);
-
         try {
+            setWaiting(true);
+            setStatus({});
 
             const tx = await ethAdapter.unstakingPosition(tokenId);
+            if (tx.error) throw tx.error;
             const rec = tx.hash && await tx.wait();
             
             if(rec.transactionHash) {
@@ -38,7 +40,11 @@ export function StakeUnstake() {
                 setClaimedRewards(ethRewards);
                 setTxHash(rec.transactionHash);
             }
-        } catch (ex) {
+        } catch (exception) {
+            setStatus({
+                error: true,
+                message: exception || "There was a problem with your request, please verify or try again later"
+            });
             setWaiting(false);
         }
     }
@@ -108,12 +114,21 @@ export function StakeUnstake() {
                     />
                 </div>
             </Grid.Column>
+
         </>
     )
 
     return (
         <Grid padded >
             {success ? renderUnstakedSuccessfully() : renderRequestUnstake()}
+
+            {status.error && (
+                <Grid.Column width={16}>
+                    <Message negative>
+                        <p>{status.message}</p>
+                    </Message>
+                </Grid.Column>
+            )}
         </Grid>
     )
 }
