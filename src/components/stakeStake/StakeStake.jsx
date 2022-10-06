@@ -30,12 +30,12 @@ export function StakeStake() {
     React.useEffect(() => {
         try {
             if (!stakeAmt) return;
-            const parsedstakeAmt = ethers.utils.parseUnits(stakeAmt || "0", DECIMALS);
+            const parsedStakeAmt = ethers.utils.parseUnits(stakeAmt || "0", DECIMALS);
 
             setStatus({});
-            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gt(parsedstakeAmt));
+            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gt(parsedStakeAmt)); // TODO: Should stakedAmount < allowance or stakedAmount <= allowance?
 
-            if (parsedstakeAmt.gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
+            if (parsedStakeAmt.gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
                 setStatus({
                     error: true,
                     message: "Stake amount higher than current balance"
