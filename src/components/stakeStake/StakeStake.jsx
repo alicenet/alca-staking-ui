@@ -33,9 +33,9 @@ export function StakeStake() {
             const parsedStakeAmt = ethers.utils.parseUnits(stakeAmt || "0", DECIMALS);
 
             setStatus({});
-            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gt(parsedStakeAmt)); // TODO: Should stakedAmount < allowance or stakedAmount <= allowance?
+            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gte(parsedStakeAmt)); 
 
-            if (parsedStakeAmt.gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
+            if (parsedStakeAmt.gte(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
                 setStatus({
                     error: true,
                     message: "Stake amount higher than current balance"
