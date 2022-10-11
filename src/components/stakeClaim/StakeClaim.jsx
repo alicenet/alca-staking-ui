@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Grid, Header, Button, Icon } from "semantic-ui-react";
+import { Grid, Header, Button, Icon, Message } from "semantic-ui-react";
 import { APPLICATION_ACTIONS } from "redux/actions";
 import ethAdapter from "eth/ethAdapter";
 import utils from "utils";
@@ -18,19 +18,31 @@ export function StakeClaim() {
     const [waiting, setWaiting] = React.useState(false);
     const [claimedAmount, setClaimedAmount] = React.useState(false);
     const [success, setSuccessStatus] = React.useState(false);
+    const [status, setStatus] = React.useState({});
     const [txHash, setTxHash] = React.useState('');
 
     const collectRewards = async () => {
-        setWaiting(true);
-        const tx = await ethAdapter.collectEthProfits(tokenId);
-        const rec = tx.hash && await tx.wait();
+        try {
+            setWaiting(true);
+            setStatus({});
 
-        if(rec.transactionHash) {
-            setClaimedAmount(ethRewards);
-            setTxHash(rec.transactionHash);
-            await dispatch(APPLICATION_ACTIONS.updateBalances());
+            const tx = await ethAdapter.collectEthProfits(tokenId);
+            if (tx.error) throw tx.error;
+            const rec = tx.hash && await tx.wait();
+            
+            if(rec.transactionHash) {
+                setClaimedAmount(ethRewards);
+                setTxHash(rec.transactionHash);
+                await dispatch(APPLICATION_ACTIONS.updateBalances());
+                setWaiting(false);
+                setSuccessStatus(true);
+            }
+        } catch (exception) {
+            setStatus({
+                error: true,
+                message: exception || "There was a problem with your request, please verify or try again later"
+            });
             setWaiting(false);
-            setSuccessStatus(true);
         }
     }
 
@@ -104,6 +116,14 @@ export function StakeClaim() {
     return (
         <Grid padded>
             {success ? renderClaimedRewardSuccessfully() : renderClaimReward()}
+
+            {status.error && (
+                <Grid.Column width={16}>
+                    <Message negative>
+                        <p>{status.message}</p>
+                    </Message>
+                </Grid.Column>
+            )}
         </Grid>
     )
 }
