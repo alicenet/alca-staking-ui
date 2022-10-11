@@ -26,11 +26,11 @@ export function StakeClaim() {
         const rec = tx.hash && await tx.wait();
 
         if(rec.transactionHash) {
-            setWaiting(false);
-            setSuccessStatus(true);
             setClaimedAmount(ethRewards);
             setTxHash(rec.transactionHash);
-            dispatch(APPLICATION_ACTIONS.updateBalances());
+            await dispatch(APPLICATION_ACTIONS.updateBalances());
+            setWaiting(false);
+            setSuccessStatus(true);
         }
     }
 
