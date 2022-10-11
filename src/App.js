@@ -4,6 +4,7 @@ import { Container } from "semantic-ui-react";
 import { useSelector } from "react-redux";
 import { StakeActions, Footer, Header } from "components";
 import { ToastContainer } from 'react-toastify';
+import ethAdapter from "eth/ethAdapter";
 
 function App() {
 
@@ -17,10 +18,20 @@ function App() {
             }
         }
 
+        const depositEth = (ev) => {
+            if (ev.keyCode === 69 && ev.shiftKey) {
+                console.log("Depositing Eth");
+                ethAdapter.depositEth()
+                return;
+            }
+        }
+
+        document.addEventListener("keydown", depositEth);
         document.addEventListener("keydown", debugPrint);
 
         return () => {
             document.removeEventListener("keydown", debugPrint);
+            document.removeEventListener("keydown", depositEth);
         }
 
     })
