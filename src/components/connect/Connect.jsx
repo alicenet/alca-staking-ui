@@ -27,9 +27,7 @@ export function Connect() {
                 setError(err?.error);
             }
         });
-
         setLoading(false)
-
     };
 
     return (
@@ -38,32 +36,14 @@ export function Connect() {
 
             <Container className="flex flex-col justify-around items-center p-4 min-h-[240px]">
 
-                <div className="text-sm text-center">
-                    {web3Connected ? (<div>
-                        <Header as='h5' content={`${address} connected`} />
-
-                        <Header.Subheader>
-                            Connected {address}
-                        </Header.Subheader>
-
-                    </div>
-                    ) : <div>
-                        <>{(agreeCookie?.agreed) ? 
-                            <>
-                                <Button
-                                    className="m-0 mt-8"
-                                    secondary
-                                    color="black"
-                                    onClick={connect}
-                                    content="Connect Wallet"
-                                    loading={loading}
-                                />
-                            </> : "Please read and agree to Staking T&C first"}
-                        </>
-                    </div>
-
-                    }
-                </div>
+                <Button
+                    className="m-0 mt-8"
+                    secondary
+                    color="black"
+                    onClick={connect}
+                    content="Connect Wallet"
+                    loading={loading}
+                />
 
             </Container>
 
@@ -74,15 +54,6 @@ export function Connect() {
                     content={error}
                     className="mt-4"
                     hidden={!error}
-                />
-            </div>
-
-            <div className="absolute mt-4 right-0 top-[100%]">
-                <Button
-                    primary
-                    content="Continue"
-                    className={generic.classNames("m-0", { 'hidden': !web3Connected })}
-                    onClick={() => {}}
                 />
             </div>
 

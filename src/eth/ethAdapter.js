@@ -228,12 +228,15 @@ class EthAdapter {
     /**
      * Attempt to connect to a Web3 Wallet from window.ethereum
      * @param { web3ConnectCallback } cb - Callback to run after a connection contains err if error
-     * @returns { String } - Connected Address
+     * @returns { Promise<Boolean> } - Connected Address
      */
     async connectToWeb3Wallet(cb) {
         try {
             this.provider = new ethers.providers.Web3Provider(window.ethereum, "any"); // Establish connection to injected wallet
             this.accounts = await this.provider.send("eth_requestAccounts", []); // Request accounts
+
+            console.log(this.accounts)
+
             this.signer = this.provider.getSigner(); // Get the signer
             let connectedAddress = await this._getAddressByIndex(0);
             store.dispatch(APPLICATION_ACTIONS.updateNetwork(String(parseInt(window.ethereum.chainId, 16))));
@@ -249,14 +252,15 @@ class EthAdapter {
             // Setup balance listener
             await this._balanceLoop();
             
-            cb(null, connectedAddress);
             store.dispatch(APPLICATION_ACTIONS.setWeb3Connected(true));
+            cb(null, connectedAddress);
+            return true;
             
-            return
         } catch (ex) {
             console.error(ex);
             store.dispatch(APPLICATION_ACTIONS.setWeb3Connected(false));
             cb({ error: ex.message });
+            return false;
         }
     }
 

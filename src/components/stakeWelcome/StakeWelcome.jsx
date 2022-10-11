@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Header, Grid, Checkbox, Segment, Button } from "semantic-ui-react";
 import { useCookies } from "react-cookie";
 import { APPLICATION_ACTIONS } from "redux/actions";
+import { Connect } from "components/connect/Connect";
 
 export function StakeWelcome({ stepForward }) {
 
@@ -133,7 +134,9 @@ export function StakeWelcome({ stepForward }) {
     return (
         <Grid padded>
 
-            <Grid.Row className="min-h-[420px]">
+            <Connect/>
+
+            {/* <Grid.Row className="min-h-[420px]">
 
                 <Grid.Column width={8}>
                     <StakingAgreement />
@@ -149,7 +152,7 @@ export function StakeWelcome({ stepForward }) {
                 <Grid.Column width={16}>
                     <FinalAgreement />
                 </Grid.Column>
-            </Grid.Row>
+            </Grid.Row> */}
 
         </Grid>
     )

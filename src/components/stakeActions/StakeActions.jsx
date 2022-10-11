@@ -42,12 +42,10 @@ export function StakeActions() {
                         <Grid.Column stretched width={3} className="pr-0">
                             <Menu fluid vertical tabular>
                                 <Menu.Item
-                                    content={web3Connected ? <>
-                                        <div className="text-sm">{hasReadTerms ? "Wallet Connected" : "Welcome"}</div>
-                                    </> : (<Connect />)}
+                                    content={<Header content="Welcome"/>}
                                     active={activeItem === 'welcome'}
                                     onClick={e => handleItemClick(e, { name: "welcome" })}
-                                    disabled={Boolean(hasReadTerms)}
+                                    disabled={activeItem !== "welcome"}
                                 />
 
                                 <Menu.Item
