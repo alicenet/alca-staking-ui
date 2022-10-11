@@ -3,39 +3,39 @@ import ethAdapter from "eth/ethAdapter";
 import { ethers } from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
-import { Grid, Header, Input, Button, Label, Message } from "semantic-ui-react";
-import { classNames } from "utils/generic";
+import { Grid, Header, Input, Button, Dimmer, Loader, Message } from "semantic-ui-react";
 import { TOKEN_TYPES } from "redux/constants";
-import { Modal } from "semantic-ui-react";
 
 const DECIMALS = 18;
 const ETHERSCAN_URL = process.env.REACT_APP__ETHERSCAN_TX_URL || "https://etherscan.io/tx/";
 
 export function StakeStake() {
-
     const { alcaBalance, alcaStakeAllowance } = useSelector(state => ({
         alcaBalance: state.application.balances.alca,
         alcaStakeAllowance: state.application.allowances.alcaStakeAllowance
     }))
 
     const dispatch = useDispatch();
-    const [stakeAmt, setStakeAmt] = React.useState("");
+    const [stakeAmt, setStakeAmt] = React.useState('');
     const [waiting, setWaiting] = React.useState(false);
     const [status, setStatus] = React.useState({});
     const [allowanceMet, setAllowanceMet] = React.useState(false);
-    const [hash, setHash] = React.useState("");
-    const [aboutModalOpen, setAboutModalOpen] = React.useState(false);
+    const [hash, setHash] = React.useState('');
+    const [multipleTx, setMultipleTx] = React.useState('');
 
     React.useEffect(() => {
-        setStakeAmt("")
-    }, [])
+        setStakeAmt('');
+    },[])
 
     React.useEffect(() => {
         try {
             if (!stakeAmt) return;
+            const parsedStakeAmt = ethers.utils.parseUnits(stakeAmt || "0", DECIMALS);
+
             setStatus({});
-            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gt(ethers.utils.parseUnits(stakeAmt || "0", DECIMALS)));
-            if (ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
+            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gte(parsedStakeAmt)); 
+
+            if (parsedStakeAmt.gte(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
                 setStatus({
                     error: true,
                     message: "Stake amount higher than current balance"
@@ -47,81 +47,83 @@ export function StakeStake() {
                 message: "There was a problem with your input, please verify"
             });
         }
-        // eslint-disable-next-line
-    }, [stakeAmt]);
+    }, [stakeAmt, alcaBalance, alcaStakeAllowance]);
 
     const approveStaking = async () => {
-        try {
-            setHash("");
-            setStatus({});
-            setWaiting(true)
+        const tx = await ethAdapter.sendStakingAllowanceRequest(stakeAmt);
+        if (tx.error) throw tx.error;
+        const rec = tx.hash && await tx.wait();
 
-            const tx = await ethAdapter.sendStakingAllowanceRequest();
-            await tx.wait();
-
-            setWaiting(false);
-            dispatch(APPLICATION_ACTIONS.updateBalances());
+        if (rec.transactionHash) {
+            setHash(rec.transactionHash);
+            setMultipleTx('1/2 completed');
             setStatus({
                 error: false,
                 message: "Allowance granted to the Staking Contract, you can now stake ALCA"
-            });
-            setHash(tx?.hash);
-        } catch (exc) {
-            setWaiting(false);
-            setStatus({
-                error: true,
-                message: "There was a problem with your request, please verify or try again later"
             });
         }
     }
 
     const stake = async () => {
+        const tx = await ethAdapter.openStakingPosition(stakeAmt);
+        if (tx.error) throw tx.error;
+        const rec = await tx.wait();
+
+        if (rec.transactionHash) {
+            await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
+            setHash(rec.transactionHash);
+            setStakeAmt('');
+            setStatus({ error: false, message: "Stake completed" });
+        }
+    }
+
+    const handleStaking = async () => {
         try {
-            setHash("");
+            setWaiting(true);
+            setHash('');
+            setMultipleTx('');
             setStatus({});
-            setWaiting(true)
-
-            const tx = await ethAdapter.openStakingPosition(stakeAmt);
-            const rec = await tx.wait();
-
-            if (rec.transactionHash) {
-                console.log("hit 1");
-                await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
-                console.log("hit 2");
-                setStatus({ error: false, message: "Stake completed" });
-                setHash(rec.transactionHash);
-                // setStakeAmt(""); // Was resetting a UI element to the user
-                setWaiting(false);
+            
+            if (allowanceMet) await stake(); 
+            
+            if (!allowanceMet) {
+                await approveStaking(); 
+                await stake(); 
             }
 
-            console.log('hit')
-
-        } catch (exc) {
-            console.log('uhoh')
             setWaiting(false);
+        } catch (exception) {
             setStatus({
                 error: true,
-                message: "There was a problem with your request, please verify or try again later"
+                message: exception || "There was a problem with your request, please verify or try again later"
             });
+            setWaiting(false);
         }
     }
 
     const StakingHeader = () => {
         if (!status?.message || status.error) {
-            return (<>
-                <Header>Stake your ALCA
-                    <Header.Subheader>
-                        {alcaBalance} available for staking
-                    </Header.Subheader>
-                </Header>
-            </>)
+            return (
+                <>
+                    <Header>Stake your ALCA
+                        <Header.Subheader>
+                            {alcaBalance} available for staking
+                        </Header.Subheader>
+                    </Header>
+                    <div className="text-xs font-bold">
+                        You will need to sign two transactions to stake your ALCA
+                    </div>
+                </>
+            )
         } else {
             return (
                 <Header>
-                    {status?.message}
+                    <div>{status?.message}</div>
+
                     <div className="mt-4 mb-4 text-base">
-                        You have successfully staked {stakeAmt} ALCA
+                        You have successfully {`${status?.message === "Stake completed" ? 'staked': 'allowed'} ${stakeAmt}`} ALCA
                     </div>
+
                     <Header.Subheader>
                         You can check the transaction hash below {hash}
                     </Header.Subheader>
@@ -131,85 +133,79 @@ export function StakeStake() {
     }
 
     return (
+        <Grid padded>
+            {waiting && (
+                <Dimmer inverted active>
+                    <Loader indeterminate>
+                        {multipleTx ? multipleTx : 'Processing Transaction..'}
+                    </Loader>
+                </Dimmer>
+            )}
 
-        <>
+            <Grid.Column width={16}>
+                <StakingHeader />
+            </Grid.Column>
 
-            <Modal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)} >
+            <Grid.Column width={16}>
+                {(!status?.message || status.error) && (
+                    <>
+                        <div>
+                            <Input
+                                placeholder={`Amount to stake`}
+                                value={stakeAmt}
+                                type="text"
+                                inputMode="decimal"
+                                pattern="^[0-9]*[.]?[0-9]*$"
+                                onChange={e => e.target.validity.valid && setStakeAmt(e.target.value)}
+                                action={{
+                                    content: "Max",
+                                    onClick: () => { setStakeAmt(alcaBalance) }
+                                }}
+                            />
+                        </div>
 
-                <Modal.Header>About Staking</Modal.Header>
-
-                <Modal.Content>
-                    About . . .
-                </Modal.Content>
-
-            </Modal>
-
-            <Grid padded>
-                <Grid.Column width={16}>
-                    <StakingHeader />
-                </Grid.Column>
-
-                <Grid.Column width={16}>
-                    {(!status?.message || status.error) && (
-                        <>
-                            <div>
-                                <Input
-                                    placeholder={`Amount to stake`}
-                                    value={stakeAmt}
-                                    type="text"
-                                    inputMode="decimal"
-                                    pattern="^[0-9]*[.]?[0-9]*$"
-                                    onChange={e => e.target.validity.valid && setStakeAmt(e.target.value)}
-                                    action={{
-                                        content: "Max",
-                                        onClick: () => { setStakeAmt(alcaBalance) }
-                                    }}
-                                />
-                            </div>
-
-                            <div className="mt-4 text-sm font-bold">
-                                You will need to sign two transactions to stake your ALCA
-                            </div>
-
-                            <div>
-                                <Button
-                                    className="mt-4"
-                                    color="black"
-                                    content={
-                                        (!alcaStakeAllowance || !stakeAmt)
-                                            ? "Enter an amount"
-                                            : allowanceMet ? "Stake ALCA" : `Stake ${stakeAmt} ALCA`
-                                    }
-                                    onClick={allowanceMet ? stake : approveStaking}
-                                    disabled={!stakeAmt}
-                                    loading={waiting}
-                                />
-                                <div className="cursor-pointer text-sm mt-4 underline" onClick={() => setAboutModalOpen(true)}>About ALCA Staked rewards</div>
-                            </div>
-                        </>
-                    )}
-
-                    {status?.message && !status?.error &&
                         <div>
                             <Button
                                 className="mt-4"
-                                content={"View on Etherscan"}
                                 color="black"
-                                onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
+                                content={
+                                    (!alcaStakeAllowance || !stakeAmt)
+                                        ? "Enter an amount"
+                                        : allowanceMet ? "Stake ALCA" : `Allow ${stakeAmt} ALCA`
+                                }
+                                onClick={handleStaking}
+                                disabled={!stakeAmt}
                             />
+
+                            <div 
+                                className="cursor-pointer text-xs mt-4 underline" 
+                                onClick={() => window.open(`${process.env.REACT_APP__ABOUT_STAKE_URL}`, '_blank').focus()}
+                            >
+                                About ALCA Staked rewards
+                            </div>
                         </div>
-                    }
+                    </>
+                )}
 
-                    {status.error && (
+                {status?.message && !status?.error &&
+                    <div>
+                        <Button
+                            className="mt-4"
+                            content={"View on Etherscan"}
+                            color="black"
+                            onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
+                        />
+                    </div>
+                }
+            </Grid.Column>
 
-                        <Message error size='mini' className='mt-4'>
-                            {status.message}
-                        </Message>
-                    )}
-
+            {status.error && (
+                <Grid.Column width={16}>
+                    <Message negative>
+                        <p>{status.message}</p>
+                    </Message>
                 </Grid.Column>
-            </Grid>
-
-        </>
+            )}
+        </Grid>
     )
 }
