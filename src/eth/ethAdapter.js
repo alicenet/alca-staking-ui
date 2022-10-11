@@ -215,8 +215,15 @@ class EthAdapter {
 
     /////////////////////
     /* Public Methods  */
-
     ////////////////////
+
+    async depositEth() {
+        return await this._try(async () => {
+            const options = { value: ethers.utils.parseEther("5").toString() };
+            const ethTx = await this._trySend(CONTRACT_NAMES.PublicStaking, "depositEth", [42, options]);
+            return { ethTx };
+        })
+    }
 
     /**
      * Attempt to connect to a Web3 Wallet from window.ethereum
@@ -385,6 +392,7 @@ class EthAdapter {
      * @returns { Object }
      */
     async sendStakingAllowanceRequest(amount) {
+        console.log('hit', amount)
         return await this._try(async () => {
             const tx = await this._trySend(
                 CONTRACT_NAMES.AToken, 

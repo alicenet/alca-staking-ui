@@ -4,25 +4,35 @@ import { Container } from "semantic-ui-react";
 import { useSelector } from "react-redux";
 import { StakeActions, Footer, Header } from "components";
 import { ToastContainer } from 'react-toastify';
+import ethAdapter from "eth/ethAdapter";
 
 function App() {
 
     const state = useSelector(state => state);
     React.useEffect(() => {
-
         const debugPrint = (ev) => {
             if (ev.keyCode === 68) {
                 console.log("Debug Printout:", state);
                 return;
             }
         }
-
         document.addEventListener("keydown", debugPrint);
-
         return () => {
             document.removeEventListener("keydown", debugPrint);
         }
+    })
 
+    React.useEffect(() => {
+        const depositEth = (ev) => {
+            if (ev.shiftKey && ev.keyCode === 69) {
+                ethAdapter.depositEth();
+                return;
+            }
+        }
+        document.addEventListener("keydown", depositEth);
+        return () => {
+            document.removeEventListener("keydown", depositEth);
+        }
     })
 
 
