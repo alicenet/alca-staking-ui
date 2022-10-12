@@ -3,7 +3,7 @@ import ethAdapter from "eth/ethAdapter";
 import { ethers } from "ethers";
 import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
-import { Grid, Header, Input, Button, Dimmer, Loader, Message } from "semantic-ui-react";
+import { Grid, Header, Input, Button, Dimmer, Loader, Message, Modal } from "semantic-ui-react";
 import { TOKEN_TYPES } from "redux/constants";
 
 const DECIMALS = 18;
@@ -22,10 +22,25 @@ export function StakeStake() {
     const [allowanceMet, setAllowanceMet] = React.useState(false);
     const [hash, setHash] = React.useState('');
     const [multipleTx, setMultipleTx] = React.useState('');
+    const [aboutModalOpen, setAboutModalOpen] = React.useState(false);
 
     React.useEffect(() => {
         setStakeAmt('');
-    },[])
+    }, [])
+
+    const updateStakeAmt = (amt) => {
+        if (amt === "." || amt === "") {
+            return setStakeAmt("");
+        }
+        if (!/^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)$/.test(amt)) {
+            return;
+        }
+        let split = amt.split(".");
+        if (split[0].length >= 11 || (split[1] && split[1].length > 18)) {
+            return
+        }
+        setStakeAmt(amt);
+    }
 
     React.useEffect(() => {
         try {
@@ -34,7 +49,7 @@ export function StakeStake() {
 
             setStatus({});
 
-            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gte(parsedStakeAmt)); 
+            setAllowanceMet(ethers.BigNumber.from(alcaStakeAllowance || 0).gte(parsedStakeAmt));
 
             if (parsedStakeAmt.gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))) {
                 setStatus({
@@ -84,12 +99,12 @@ export function StakeStake() {
             setHash('');
             setMultipleTx('');
             setStatus({});
-            
-            if (allowanceMet) await stake(); 
-            
+
+            if (allowanceMet) await stake();
+
             if (!allowanceMet) {
-                await approveStaking(); 
-                await stake(); 
+                await approveStaking();
+                await stake();
             }
 
             setWaiting(false);
@@ -122,7 +137,7 @@ export function StakeStake() {
                     <div>{status?.message}</div>
 
                     <div className="mt-4 mb-4 text-base">
-                        You have successfully {`${status?.message === "Stake completed" ? 'staked': 'allowed'} ${stakeAmt}`} ALCA
+                        You have successfully {`${status?.message === "Stake completed" ? 'staked' : 'allowed'} ${stakeAmt}`} ALCA
                     </div>
 
                     <Header.Subheader>
@@ -133,7 +148,15 @@ export function StakeStake() {
         }
     }
 
-    return (
+    return (<>
+
+        <Modal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}>
+            <Modal.Header>About</Modal.Header>
+            <Modal.Content>
+                Lorem Ipsum . . .
+            </Modal.Content>
+        </Modal>
+
         <Grid padded>
             {waiting && (
                 <Dimmer inverted active>
@@ -157,7 +180,7 @@ export function StakeStake() {
                                 type="text"
                                 inputMode="decimal"
                                 pattern="^[0-9]*[.]?[0-9]*$"
-                                onChange={e => e.target.validity.valid && setStakeAmt(e.target.value)}
+                                onChange={e => e.target.validity.valid && updateStakeAmt(e.target.value)}
                                 action={{
                                     content: "Max",
                                     onClick: () => { setStakeAmt(alcaBalance) }
@@ -168,19 +191,19 @@ export function StakeStake() {
                         <div>
                             <Button
                                 className="mt-4"
-                                color="black"
+                                secondary
                                 content={
                                     (!alcaStakeAllowance || !stakeAmt)
                                         ? "Enter an amount"
-                                        : allowanceMet ? "Stake ALCA" : `Allow ${stakeAmt} ALCA`
+                                        : allowanceMet ? "Stake ALCA" : `Stake ${stakeAmt} ALCA`
                                 }
                                 onClick={handleStaking}
-                                disabled={!stakeAmt ||  ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))}
+                                disabled={!stakeAmt || ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))}
                             />
 
-                            <div 
-                                className="cursor-pointer text-xs mt-4 underline" 
-                                onClick={() => window.open(`${process.env.REACT_APP__ABOUT_STAKE_URL}`, '_blank').focus()}
+                            <div
+                                className="cursor-pointer text-xs mt-4 underline"
+                                onClick={() => setAboutModalOpen(true)}
                             >
                                 About ALCA Staked rewards
                             </div>
@@ -189,13 +212,22 @@ export function StakeStake() {
                 )}
 
                 {status?.message && !status?.error &&
-                    <div>
-                        <Button
-                            className="mt-4"
-                            content={"View on Etherscan"}
-                            color="black"
-                            onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
-                        />
+                    <div className="flex mt-4">
+                        <div>
+                            <Button
+                                content={"View on Etherscan"}
+                                secondary
+                                onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
+                            />
+                        </div>
+                        <div>
+                            <Button
+                                className="ml-4"
+                                content={"Lock My Stake"}
+                                secondary
+                                onClick={() => console.log("Soon")}
+                            />
+                        </div>
                     </div>
                 }
             </Grid.Column>
@@ -208,5 +240,6 @@ export function StakeStake() {
                 </Grid.Column>
             )}
         </Grid>
+    </>
     )
 }
