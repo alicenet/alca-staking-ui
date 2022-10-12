@@ -31,6 +31,10 @@ export function StakeActions() {
         }
     };
 
+    const activeMenuClass = (checkAgainst) => {
+        return checkAgainst === activeItem ? "border-l-aliceblue border-l-[3px]" : ""
+    }
+
     return (
         <div className="flex justify-center w-full">
 
@@ -42,10 +46,11 @@ export function StakeActions() {
                         <Grid.Column stretched width={3} className="pr-0">
                             <Menu fluid vertical tabular>
                                 <Menu.Item
-                                    content={<Header content="Welcome"/>}
+                                    content={<Header content="Welcome" />}
                                     active={activeItem === 'welcome'}
                                     onClick={e => handleItemClick(e, { name: "welcome" })}
                                     disabled={activeItem !== "welcome"}
+                                    className={activeMenuClass("welcome")}
                                 />
 
                                 <Menu.Item
@@ -58,6 +63,7 @@ export function StakeActions() {
                                     disabled={Boolean(!hasReadTerms || stakedAlca || !web3Connected)}
                                     active={activeItem === 'stake'}
                                     onClick={e => handleItemClick(e, { name: "stake" })}
+                                    className={activeMenuClass("stake")}
                                 />
 
                                 <Menu.Item
@@ -72,16 +78,17 @@ export function StakeActions() {
                                     disabled={Boolean(!hasReadTerms || !stakedAlca)}
                                     active={activeItem === 'unstake'}
                                     onClick={e => handleItemClick(e, { name: "unstake" })}
+                                    className={activeMenuClass("unstake")}
                                 />
 
                                 <Menu.Item
                                     content={<>
                                         <Header className={
-                                            classNames({ "opacity-40": !hasReadTerms || [0, "0.0"].includes(ethRewards) || !stakedAlca})
+                                            classNames({ "opacity-40": !hasReadTerms || [0, "0.0"].includes(ethRewards) || !stakedAlca })
                                         }>
                                             Rewards
                                         </Header>
-                                        
+
                                         <div className="text-xs">
                                             {ethRewards > 0 ? `${ethRewards} ETH to claim` : "No ETH to claim"}
                                         </div>
@@ -92,6 +99,7 @@ export function StakeActions() {
                                     disabled={Boolean(!hasReadTerms || [0, "0.0"].includes(ethRewards) || !stakedAlca)}
                                     active={activeItem === 'claim'}
                                     onClick={e => handleItemClick(e, { name: "claim" })}
+                                    className={activeMenuClass("claim")}
                                 />
                             </Menu>
                         </Grid.Column>
