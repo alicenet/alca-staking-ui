@@ -10,13 +10,15 @@ const ETHERSCAN_URL = process.env.REACT_APP__ETHERSCAN_TX_URL || "https://ethers
 export function StakeClaim() {
     const dispatch = useDispatch();
 
-    const { tokenId, ethRewards } = useSelector(state => ({
+    const { tokenId, ethRewards, alcaRewards } = useSelector(state => ({
         tokenId: state.application.stakedPosition.tokenId,
         ethRewards: state.application.stakedPosition.ethRewards,
+        alcaRewards: state.application.stakedPosition.alcaRewards
     }))
 
     const [waiting, setWaiting] = React.useState(false);
-    const [claimedAmount, setClaimedAmount] = React.useState(false);
+    const [claimedEthAmount, setClaimedEthAmount] = React.useState(false);
+    const [claimedAlcaAmount, setClaimedAlcaAmount] = React.useState(false);
     const [success, setSuccessStatus] = React.useState(false);
     const [status, setStatus] = React.useState({});
     const [txHash, setTxHash] = React.useState('');
@@ -26,12 +28,13 @@ export function StakeClaim() {
             setWaiting(true);
             setStatus({});
 
-            const tx = await ethAdapter.collectEthProfits(tokenId);
+            const tx = await ethAdapter.collectAllProfits(tokenId);
             if (tx.error) throw tx.error;
             const rec = tx.hash && await tx.wait();
             
             if(rec.transactionHash) {
-                setClaimedAmount(ethRewards);
+                setClaimedEthAmount(ethRewards);
+                setClaimedAlcaAmount(alcaRewards);
                 setTxHash(rec.transactionHash);
                 await dispatch(APPLICATION_ACTIONS.updateBalances());
                 setWaiting(false);
@@ -59,7 +62,7 @@ export function StakeClaim() {
 
             <Grid.Column width={16}>
                 <div>
-                    <Header as="h2">{ethRewards} ETH</Header>
+                    <Header as="h2">{ethRewards} ETH / {alcaRewards} ALCA</Header>
                     <p>Rewards will be sent automatically to your wallet</p>
                 </div>
 
@@ -82,7 +85,7 @@ export function StakeClaim() {
             <Grid.Column width={16}>
                 <Header>Reward Claim Completed
                     <Header.Subheader>
-                        <strong>You have successfully claimed a reward of {claimedAmount} ETH</strong>{' '} 
+                        <strong>You have successfully claimed a reward of {claimedEthAmount} ETH / {claimedAlcaAmount} ALCA</strong>{' '} 
                         Rewards will be sent automatically to your wallet
                     </Header.Subheader>
                 </Header>

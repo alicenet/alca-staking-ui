@@ -225,6 +225,19 @@ class EthAdapter {
         })
     }
 
+    async depositAlca() {
+        return await this._try(async () => {
+            const alcaAmount = ethers.utils.parseEther("3").toString();
+            await this.sendStakingAllowanceRequest(alcaAmount);
+            const alcaTx = await this._trySend(
+                CONTRACT_NAMES.PublicStaking, 
+                "depositToken", 
+                [42, alcaAmount]
+            );
+            return { alcaTx };
+        })
+    }
+
     /**
      * Attempt to connect to a Web3 Wallet from window.ethereum
      * @param { web3ConnectCallback } cb - Callback to run after a connection contains err if error
