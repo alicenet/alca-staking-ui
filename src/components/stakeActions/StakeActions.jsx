@@ -40,12 +40,14 @@ export function StakeActions() {
 
                     <Grid.Row>
                         <Grid.Column stretched width={3} className="pr-0">
-                            <Menu fluid vertical tabular>
+                            <Menu fluid vertical tabular role="list">
                                 <Menu.Item
                                     content={<Header content="Welcome"/>}
                                     active={activeItem === 'welcome'}
                                     onClick={e => handleItemClick(e, { name: "welcome" })}
+                                    onKeyPress={e => handleItemClick(e, { name: "welcome" })}
                                     disabled={activeItem !== "welcome"}
+                                    tabIndex="1"
                                 />
 
                                 <Menu.Item
@@ -58,6 +60,8 @@ export function StakeActions() {
                                     disabled={Boolean(!hasReadTerms || stakedAlca || !web3Connected)}
                                     active={activeItem === 'stake'}
                                     onClick={e => handleItemClick(e, { name: "stake" })}
+                                    onKeyPress={e => !Boolean(!hasReadTerms || stakedAlca || !web3Connected) && handleItemClick(e, { name: "stake" })}
+                                    tabIndex="1"
                                 />
 
                                 <Menu.Item
@@ -72,6 +76,8 @@ export function StakeActions() {
                                     disabled={Boolean(!hasReadTerms || !stakedAlca)}
                                     active={activeItem === 'unstake'}
                                     onClick={e => handleItemClick(e, { name: "unstake" })}
+                                    onKeyPress={e => !Boolean(!hasReadTerms || !stakedAlca) && handleItemClick(e, { name: "unstake" })}
+                                    tabIndex="2"
                                 />
 
                                 <Menu.Item
@@ -92,6 +98,8 @@ export function StakeActions() {
                                     disabled={Boolean(!hasReadTerms || ([0, "0.0"].includes(ethRewards) && [0, "0.0"].includes(alcaRewards)) || !stakedAlca)}
                                     active={activeItem === 'claim'}
                                     onClick={e => handleItemClick(e, { name: "claim" })}
+                                    onKeyPress={e => !Boolean(!hasReadTerms || ([0, "0.0"].includes(ethRewards) && [0, "0.0"].includes(alcaRewards)) || !stakedAlca) && handleItemClick(e, { name: "claim" })}
+                                    tabIndex="3"
                                 />
                             </Menu>
                         </Grid.Column>
