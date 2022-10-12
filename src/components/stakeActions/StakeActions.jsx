@@ -77,7 +77,7 @@ export function StakeActions() {
                                 <Menu.Item
                                     content={<>
                                         <Header className={
-                                            classNames({ "opacity-40": !hasReadTerms || [0, "0.0"].includes(ethRewards) || !stakedAlca})
+                                            classNames({ "opacity-40": !hasReadTerms || ([0, "0.0"].includes(ethRewards) && [0, "0.0"].includes(alcaRewards)) || !stakedAlca})
                                         }>
                                             Rewards
                                         </Header>
@@ -85,11 +85,11 @@ export function StakeActions() {
                                         <div className="text-xs">
                                             {ethRewards > 0 ? `${ethRewards} ETH to claim` : "No ETH to claim"}
                                         </div>
-                                        {/* <div className="text-xs">
+                                        <div className="text-xs">
                                             {alcaRewards > 0 ? `${alcaRewards} ALCA to claim` : "No ALCA to claim"}
-                                        </div> */}
+                                        </div>
                                     </>}
-                                    disabled={Boolean(!hasReadTerms || [0, "0.0"].includes(ethRewards) || !stakedAlca)}
+                                    disabled={Boolean(!hasReadTerms || ([0, "0.0"].includes(ethRewards) && [0, "0.0"].includes(alcaRewards)) || !stakedAlca)}
                                     active={activeItem === 'claim'}
                                     onClick={e => handleItemClick(e, { name: "claim" })}
                                 />

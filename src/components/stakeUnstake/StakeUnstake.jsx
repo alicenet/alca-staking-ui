@@ -15,12 +15,14 @@ export function StakeUnstake() {
     const [status, setStatus] = React.useState({});
     const [txHash, setTxHash] = React.useState('');
     const [untakedAmount, setUnstakedAmount] = React.useState('');
-    const [claimedRewards, setClaimedRewards] = React.useState('');
+    const [claimedEthRewards, setClaimedEthRewards] = React.useState('');
+    const [claimedAlcaRewards, setClaimedAlcaRewards] = React.useState('');
 
-    const { stakedAlca, tokenId, ethRewards } = useSelector(state => ({
+    const { stakedAlca, tokenId, ethRewards, alcaRewards } = useSelector(state => ({
         stakedAlca: state.application.stakedPosition.stakedAlca,
         tokenId: state.application.stakedPosition.tokenId,
         ethRewards: state.application.stakedPosition.ethRewards,
+        alcaRewards: state.application.stakedPosition.alcaRewards
     }))
 
     const unstakePosition = async () => {
@@ -37,7 +39,8 @@ export function StakeUnstake() {
                 setWaiting(false);
                 setSuccessStatus(true);
                 setUnstakedAmount(stakedAlca);
-                setClaimedRewards(ethRewards);
+                setClaimedEthRewards(ethRewards);
+                setClaimedAlcaRewards(alcaRewards);
                 setTxHash(rec.transactionHash);
             }
         } catch (exception) {
@@ -63,7 +66,7 @@ export function StakeUnstake() {
             <Grid.Column width={16}>
                 <div>
                     <Header as="h2">{stakedAlca} ALCA</Header>
-                    <Header as="h3">Rewards to Claim: {ethRewards} ETH</Header>
+                    <Header as="h3">Rewards to Claim: {ethRewards} ETH / {alcaRewards} ALCA</Header>
                     <p>Rewards will be sent automatically to your wallet</p>
                 </div>
 
@@ -87,7 +90,7 @@ export function StakeUnstake() {
                 <Header>Unstake completed
                     <Header.Subheader>
                         <strong>You have successfully unstaked {untakedAmount} ALCA</strong> and claimed a{' '} 
-                        <strong>reward of {claimedRewards} ETH</strong> to your wallet
+                        <strong>reward of {claimedEthRewards} ETH / {claimedAlcaRewards} ALCA</strong> to your wallet
                     </Header.Subheader>
                 </Header>
             </Grid.Column>

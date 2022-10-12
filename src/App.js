@@ -18,10 +18,13 @@ function App() {
             }
         }
 
-        const depositEth = (ev) => {
+        const depositEth = async (ev) => {
             if (ev.keyCode === 69 && ev.shiftKey) {
                 console.log("Depositing Eth");
-                ethAdapter.depositEth()
+                await ethAdapter.depositEth();
+
+                console.log("Depositing ALCA");
+                await ethAdapter.depositAlca();
                 return;
             }
         }
