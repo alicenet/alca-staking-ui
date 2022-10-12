@@ -33,8 +33,8 @@ export function StakeUnstake() {
             const tx = await ethAdapter.unstakingPosition(tokenId);
             if (tx.error) throw tx.error;
             const rec = tx.hash && await tx.wait();
-            
-            if(rec.transactionHash) {
+
+            if (rec.transactionHash) {
                 await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
                 setWaiting(false);
                 setSuccessStatus(true);
@@ -57,8 +57,8 @@ export function StakeUnstake() {
             <Grid.Column width={16}>
                 <Header>Unstake ALCA Position
                     <Header.Subheader>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor 
-                    incididunt ut labore et dolore magna aliqua.
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                        incididunt ut labore et dolore magna aliqua.
                     </Header.Subheader>
                 </Header>
             </Grid.Column>
@@ -73,7 +73,7 @@ export function StakeUnstake() {
                 <div>
                     <Button
                         className="mt-4"
-                        color="black"
+                        secondary
                         content={"Unstake Position"}
                         onClick={unstakePosition}
                         disabled={false}
@@ -111,7 +111,7 @@ export function StakeUnstake() {
                 <div>
                     <Button
                         className="mt-4"
-                        color="black"
+                        secondary
                         content={"View on Etherscan"}
                         onClick={() => window.open(`${ETHERSCAN_URL}${txHash}`, '_blank').focus()}
                     />
@@ -123,6 +123,14 @@ export function StakeUnstake() {
 
     return (
         <Grid padded >
+
+            {stakedAlca && (
+                <div className="font-bold text-sm absolute left-[24px] -top-[54px] p-3 bg-blue-50 text-blue-500 border-r-blue-400 rounded">
+                    <Icon name="warning sign" className='mr-4'/>
+                    {stakedAlca} ALCA already staked!
+                </div>
+            )}
+
             {success ? renderUnstakedSuccessfully() : renderRequestUnstake()}
 
             {status.error && (

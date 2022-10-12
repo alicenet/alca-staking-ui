@@ -31,6 +31,10 @@ export function StakeActions() {
         }
     };
 
+    const activeMenuClass = (checkAgainst) => {
+        return checkAgainst === activeItem ? "border-l-aliceblue border-l-[3px]" : ""
+    }
+
     return (
         <div className="flex justify-center w-full">
 
@@ -42,19 +46,20 @@ export function StakeActions() {
                         <Grid.Column stretched width={3} className="pr-0">
                             <Menu fluid vertical tabular role="list">
                                 <Menu.Item
-                                    content={<Header content="Welcome"/>}
+                                    content={<Header content="Welcome" />}
                                     active={activeItem === 'welcome'}
                                     onClick={e => handleItemClick(e, { name: "welcome" })}
                                     onKeyPress={e => handleItemClick(e, { name: "welcome" })}
                                     disabled={activeItem !== "welcome"}
                                     tabIndex="1"
+                                    className={activeMenuClass("welcome")}
                                 />
 
                                 <Menu.Item
                                     content={<>
                                         <Header className={classNames({ "opacity-40": !hasReadTerms || stakedAlca || !web3Connected })}>Stake</Header>
                                         <div className="text-xs">
-                                            {Number(alcaBalance).toLocaleString(false, { maximumFractionDigits: 4 })} ALCA Available
+                                            {Number(alcaBalance).toLocaleString(false, { maximumFractionDigits: 7 })} ALCA Available
                                         </div>
                                     </>}
                                     disabled={Boolean(!hasReadTerms || stakedAlca || !web3Connected)}
@@ -62,6 +67,7 @@ export function StakeActions() {
                                     onClick={e => handleItemClick(e, { name: "stake" })}
                                     onKeyPress={e => !Boolean(!hasReadTerms || stakedAlca || !web3Connected) && handleItemClick(e, { name: "stake" })}
                                     tabIndex="1"
+                                    className={activeMenuClass("stake")}
                                 />
 
                                 <Menu.Item
@@ -69,7 +75,7 @@ export function StakeActions() {
                                         <Header className={classNames({ "opacity-40": !hasReadTerms || !stakedAlca > 0 })}>Unstake</Header>
                                         <div className="text-xs">
                                             {stakedAlca > 0
-                                                ? `${stakedAlca} ALCA`
+                                                ? `${Number(stakedAlca).toLocaleString(false, {maximumFractionDigits: 7})} ALCA`
                                                 : "No ALCA staked"}
                                         </div>
                                     </>}
@@ -78,6 +84,7 @@ export function StakeActions() {
                                     onClick={e => handleItemClick(e, { name: "unstake" })}
                                     onKeyPress={e => !Boolean(!hasReadTerms || !stakedAlca) && handleItemClick(e, { name: "unstake" })}
                                     tabIndex="2"
+                                    className={activeMenuClass("unstake")}
                                 />
 
                                 <Menu.Item
@@ -87,12 +94,12 @@ export function StakeActions() {
                                         }>
                                             Rewards
                                         </Header>
-                                        
+
                                         <div className="text-xs">
-                                            {ethRewards > 0 ? `${ethRewards} ETH to claim` : "No ETH to claim"}
+                                            {ethRewards > 0 ? `${Number(ethRewards).toLocaleString(false, {maximumFractionDigits: 7})} ETH to claim` : "No ETH to claim"}
                                         </div>
                                         <div className="text-xs">
-                                            {alcaRewards > 0 ? `${alcaRewards} ALCA to claim` : "No ALCA to claim"}
+                                            {alcaRewards > 0 ? `${Number(alcaRewards).toLocaleString(false, {maximumFractionDigits: 7})} ALCA to claim` : "No ALCA to claim"}
                                         </div>
                                     </>}
                                     disabled={Boolean(!hasReadTerms || ([0, "0.0"].includes(ethRewards) && [0, "0.0"].includes(alcaRewards)) || !stakedAlca)}
@@ -100,6 +107,7 @@ export function StakeActions() {
                                     onClick={e => handleItemClick(e, { name: "claim" })}
                                     onKeyPress={e => !Boolean(!hasReadTerms || ([0, "0.0"].includes(ethRewards) && [0, "0.0"].includes(alcaRewards)) || !stakedAlca) && handleItemClick(e, { name: "claim" })}
                                     tabIndex="3"
+                                    className={activeMenuClass("claim")}
                                 />
                             </Menu>
                         </Grid.Column>
