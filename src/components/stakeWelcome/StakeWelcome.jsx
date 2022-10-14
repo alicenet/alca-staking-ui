@@ -27,7 +27,7 @@ export function StakeWelcome({ stepForward }) {
 
     // Push forward if user cookie has been set or is set
     React.useEffect(() => {
-        if (hasReadTerms && web3Connected) {
+        if (web3Connected) {
             stepForward();
         }
 
