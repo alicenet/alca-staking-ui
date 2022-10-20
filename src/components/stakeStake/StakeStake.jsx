@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { APPLICATION_ACTIONS } from "redux/actions";
 import { Grid, Header, Input, Button, Dimmer, Loader, Message, Modal } from "semantic-ui-react";
 import { TOKEN_TYPES } from "redux/constants";
+import { LOCK_APP_URL } from "utils/constants";
 
 const DECIMALS = 18;
 const ETHERSCAN_URL = process.env.REACT_APP__ETHERSCAN_TX_URL || "https://etherscan.io/tx/";
@@ -77,7 +78,7 @@ export function StakeStake() {
             setMultipleTx('1/2 completed');
             setStatus({
                 error: false,
-                message: "Allowance granted to the Staking Contract, you can now stake ALCA"
+                message: `You have successfully allowed ${stakeAmt} ALCA`
             });
         }
     }
@@ -91,7 +92,10 @@ export function StakeStake() {
             await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
             setHash(rec.transactionHash);
             setStakeAmt('');
-            setStatus({ error: false, message: "Stake completed" });
+            setStatus({
+                error: false,
+                message: `You have successfully staked ${stakeAmt} ALCA`
+            });
         }
     }
 
@@ -134,8 +138,10 @@ export function StakeStake() {
             if (rec.transactionHash) {
                 await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
                 setHash(rec.transactionHash);
-                setStakeAmt('');
-                setStatus({ error: false, message: "Lock completed" });
+                setStatus({
+                    error: false,
+                    message: "You have successfully locked your NFT"
+                });
             }
 
             setWaiting(false);
@@ -149,40 +155,28 @@ export function StakeStake() {
         }
     }
 
-    const StakingHeader = () => {
-        if (!status?.message || status.error) {
-            return (
-                <>
-                    <Header>Stake your ALCA
-                        <Header.Subheader>
-                            {alcaBalance} available for staking
-                        </Header.Subheader>
-                    </Header>
-                    <div className="text-xs font-bold">
-                        You will need to sign two transactions to stake your ALCA
-                    </div>
-                </>
-            )
-        } else {
-            return (
-                <Header>
-                    <div>{status?.message}</div>
-
-                    <div className="mt-4 mb-4 text-base">
-                        You have successfully {`${status?.message === "Stake completed" ? 'staked' : 'allowed'} ${stakeAmt}`} ALCA
-                    </div>
-
-                    <Header.Subheader>
-                        You can check the transaction hash below {hash}
-                    </Header.Subheader>
-                </Header>
-            )
-        }
-    }
-
     /////////////////////
     /* Render function */
     ////////////////////
+    function renderMessage() {
+        if (!status?.message || status?.error) return <></>
+
+        return (
+            <div className="bg-[#245979] p-4 rounded-md">
+                <Header>
+                    <div className="mb-4 text-base text-[#fff]">
+                        {status?.message}
+                    </div>
+
+                    <Header.Subheader className="text-[#fff]">
+                        You can check the transaction hash below {hash}
+                    </Header.Subheader>
+                </Header>
+            </div>
+        )
+
+    }
+
     function renderLockNftButton(text) {
         text = text || "Lock My Stake"
 
@@ -194,6 +188,7 @@ export function StakeStake() {
             />
         )
     }
+
     function renderStakeSuccessButtons() {
         if (!status?.message || status?.error) return <></>;
 
@@ -222,6 +217,24 @@ export function StakeStake() {
             </div>
         )
     }
+
+    const StakingHeader = () => {
+        return (
+            <>
+                {renderMessage()}
+
+                <Header>Stake your ALCA
+                    <Header.Subheader>
+                        {alcaBalance} available for staking
+                    </Header.Subheader>
+                </Header>
+                <div className="text-xs font-bold">
+                    You will need to sign two transactions to stake your ALCA
+                </div>
+            </>
+        )
+    }
+
 
     return (<>
 
