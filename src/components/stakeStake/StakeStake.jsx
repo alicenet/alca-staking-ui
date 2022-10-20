@@ -10,7 +10,8 @@ const DECIMALS = 18;
 const ETHERSCAN_URL = process.env.REACT_APP__ETHERSCAN_TX_URL || "https://etherscan.io/tx/";
 
 export function StakeStake() {
-    const { alcaBalance, alcaStakeAllowance } = useSelector(state => ({
+    const { tokenId, alcaBalance, alcaStakeAllowance } = useSelector(state => ({
+        tokenId: state.application.stakedPosition.tokenId,
         alcaBalance: state.application.balances.alca,
         alcaStakeAllowance: state.application.allowances.alcaStakeAllowance
     }))
@@ -18,6 +19,7 @@ export function StakeStake() {
     const dispatch = useDispatch();
     const [stakeAmt, setStakeAmt] = React.useState('');
     const [waiting, setWaiting] = React.useState(false);
+    const [errorLocking, setErrorLocking] = React.useState(false);
     const [status, setStatus] = React.useState({});
     const [allowanceMet, setAllowanceMet] = React.useState(false);
     const [hash, setHash] = React.useState('');
@@ -117,6 +119,36 @@ export function StakeStake() {
         }
     }
 
+    const handleLocking = async () => {
+        try {
+            setErrorLocking(false)
+            setWaiting(true);
+            setHash('');
+            setMultipleTx('');
+            setStatus({});
+
+            const tx = await ethAdapter.safeTransferFromPublicStakingNFT(tokenId);
+            if (tx.error) throw tx.error;
+            const rec = await tx.wait();
+
+            if (rec.transactionHash) {
+                await dispatch(APPLICATION_ACTIONS.updateBalances(TOKEN_TYPES.ALL));
+                setHash(rec.transactionHash);
+                setStakeAmt('');
+                setStatus({ error: false, message: "Lock completed" });
+            }
+
+            setWaiting(false);
+        } catch (exception) {
+            setStatus({
+                error: true,
+                message: exception || "There was a problem with your request, please verify or try again later"
+            });
+            setErrorLocking(true)
+            setWaiting(false);
+        }
+    }
+
     const StakingHeader = () => {
         if (!status?.message || status.error) {
             return (
@@ -146,6 +178,49 @@ export function StakeStake() {
                 </Header>
             )
         }
+    }
+
+    /////////////////////
+    /* Render function */
+    ////////////////////
+    function renderLockNftButton(text) {
+        text = text || "Lock My Stake"
+
+        return (
+            <Button
+                content={text}
+                secondary
+                onClick={handleLocking}
+            />
+        )
+    }
+    function renderStakeSuccessButtons() {
+        if (!status?.message || status?.error) return <></>;
+
+        return (
+            <div className="flex mt-4">
+                <div>
+                    <Button
+                        content={"View on Etherscan"}
+                        secondary
+                        onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
+                    />
+                </div>
+                <div className="ml-4">
+                    {renderLockNftButton()}
+                </div>
+            </div>
+        )
+    }
+
+    function renderRetryLockNftButton() {
+        if (!errorLocking) return <></>;
+
+        return (
+            <div className="flex mt-6">
+                {renderLockNftButton("Retry Lock My Stake")}
+            </div>
+        )
     }
 
     return (<>
@@ -211,25 +286,9 @@ export function StakeStake() {
                     </>
                 )}
 
-                {status?.message && !status?.error &&
-                    <div className="flex mt-4">
-                        <div>
-                            <Button
-                                content={"View on Etherscan"}
-                                secondary
-                                onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
-                            />
-                        </div>
-                        <div>
-                            <Button
-                                className="ml-4"
-                                content={"Lock My Stake"}
-                                secondary
-                                onClick={() => console.log("Soon")}
-                            />
-                        </div>
-                    </div>
-                }
+                {renderStakeSuccessButtons()}
+
+                {renderRetryLockNftButton()}
             </Grid.Column>
 
             {status.error && (

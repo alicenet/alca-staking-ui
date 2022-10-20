@@ -7,9 +7,9 @@ import { TOKEN_TYPES } from 'redux/constants';
 import { CONTRACT_ADDRESSES } from 'config/contracts';
 import utils from 'utils';
 
-/** 
+/**
  * Re exported for easy importing
- * 
+ *
 */
 export const CONTRACT_NAMES = config.CONTRACT_NAMES;
 
@@ -24,17 +24,17 @@ class EthAdapter {
     /* Private Methods -- Scroll down for public methods */
     //////////////////////////////////////////////////////
     constructor() {
-        this.accounts = []; // Web3 Accounts List 
+        this.accounts = []; // Web3 Accounts List
         this.provider = null; // Web3 Provider -- Populated on successful _connectToWeb3Wallet()
         this.signer = null; // Web3 Signer -- Populated on successful _connectToWeb3Wallet()
         this.contracts = config.CONTRACTS; // Contracts from config
         this._setupWeb3Listeners();
         this.addressesFromFactory = {};
         this.timeBetweenBalancePolls = 7500;
-        
+
         // Setup RPC provider
         this.provider = new ethers.providers.JsonRpcProvider(config.RPC.URL);
-        
+
         console.debug("EthAdapter Init: ", this);
     }
 
@@ -43,7 +43,7 @@ class EthAdapter {
      */
     async _balanceLoop() {
         // Request accounts
-        const accts = await this.provider.send("eth_requestAccounts", []); 
+        const accts = await this.provider.send("eth_requestAccounts", []);
         if (accts.length === 0) {
             console.log("balfail")
             return;
@@ -230,11 +230,22 @@ class EthAdapter {
             const alcaAmount = ethers.utils.parseEther("3").toString();
             await this.sendStakingAllowanceRequest(alcaAmount);
             const alcaTx = await this._trySend(
-                CONTRACT_NAMES.PublicStaking, 
-                "depositToken", 
+                CONTRACT_NAMES.PublicStaking,
+                "depositToken",
                 [42, alcaAmount]
             );
             return { alcaTx };
+        })
+    }
+
+    async safeTransferFromPublicStakingNFT(tokenId) {
+        return await this._try(async () => {
+            const tx = await this._trySend(
+                CONTRACT_NAMES.PublicStaking,
+                "safeTransferFrom(address,address,uint256)",
+                [this._getAddressByIndex(0), this.contracts.Lockup.address, tokenId]
+            );
+            return { tx };
         })
     }
 
@@ -254,21 +265,21 @@ class EthAdapter {
             let connectedAddress = await this._getAddressByIndex(0);
             store.dispatch(APPLICATION_ACTIONS.updateNetwork(String(parseInt(window.ethereum.chainId, 16))));
             store.dispatch(APPLICATION_ACTIONS.setConnectedAddress(connectedAddress));
-            
+
             // Lookup Contract Addresses
             for (let contract in this.contracts) {
                 if (contract === "Factory") { continue }
                 let address = await this._lookupContractName(contract);
                 this.addressesFromFactory[contract] = address;
             }
-            
+
             // Setup balance listener
             await this._balanceLoop();
-            
+
             store.dispatch(APPLICATION_ACTIONS.setWeb3Connected(true));
             cb(null, connectedAddress);
             return true;
-            
+
         } catch (ex) {
             console.error(ex);
             store.dispatch(APPLICATION_ACTIONS.setWeb3Connected(false));
@@ -326,7 +337,7 @@ class EthAdapter {
 
     /**
      * Get staked ALCA
-     * @param { Number } accountIndex - Account index to 
+     * @param { Number } accountIndex - Account index to
      * @returns { Object } - Lowest staked amount
      */
     async getStakedAlca(accountIndex = 0) {
@@ -340,14 +351,14 @@ class EthAdapter {
             return {
                 ...stakedAlca,
                 stakedAlca: stakedAlca.shares ? ethers.utils.formatEther(stakedAlca.shares) : 0,
-                ethRewards: stakedAlca.ethRewards || 0, 
+                ethRewards: stakedAlca.ethRewards || 0,
                 alcaRewards: stakedAlca.alcaRewards || 0
             };
         });
     }
-    
+
     /**
-     * Get all token id for a given address 
+     * Get all token id for a given address
      * @param { String } address - Owner address
      * @returns { Array<Number> }
      */
@@ -359,8 +370,8 @@ class EthAdapter {
         while (fetching) {
             try {
                 const tokenId = await this._tryCall(
-                    CONTRACT_NAMES.PublicStaking, 
-                    "tokenOfOwnerByIndex", 
+                    CONTRACT_NAMES.PublicStaking,
+                    "tokenOfOwnerByIndex",
                     [address, index]
                 );
                 if (tokenId) tokenIds.push(tokenId); index++;
@@ -368,7 +379,7 @@ class EthAdapter {
         }
         return tokenIds;
     }
-    
+
     /**
      * Get metadata for each token
      * @param { Array<Number> } tokenIds - array of token ids
@@ -411,10 +422,10 @@ class EthAdapter {
     async sendStakingAllowanceRequest(amount) {
         return await this._try(async () => {
             const tx = await this._trySend(
-                CONTRACT_NAMES.AToken, 
-                "approve", 
+                CONTRACT_NAMES.AToken,
+                "approve",
                 [
-                    CONTRACT_ADDRESSES.PublicStaking, 
+                    CONTRACT_ADDRESSES.PublicStaking,
                     ethers.utils.parseEther(amount)
                 ]
             )
@@ -440,6 +451,7 @@ class EthAdapter {
      * @returns { Object }
      */
     async unstakingPosition(tokenId) {
+        console.log(this.contracts)
         return await this._try(async () => {
             const tx = await this._trySend(CONTRACT_NAMES.PublicStaking, "burn", [tokenId]);
             return tx;
@@ -457,10 +469,10 @@ class EthAdapter {
             return ethers.utils.formatEther(payout);
         })
     }
-    
+
     /**
      * Get ALCA rewards for a given token
-     * @param { Number } tokenId 
+     * @param { Number } tokenId
      * @returns { String }
      */
     async estimateTokenCollection(tokenId) {
@@ -472,7 +484,7 @@ class EthAdapter {
 
     /**
      * Claim all rewards for ETH
-     * @param { Number } tokenId 
+     * @param { Number } tokenId
      * @returns { Object }
      */
     async collectEthProfits(tokenId) {
@@ -484,7 +496,7 @@ class EthAdapter {
 
     /**
      * Claim all rewards for both ETH and ALCA
-     * @param { Number } tokenId 
+     * @param { Number } tokenId
      * @returns { Object }
      */
     async collectAllProfits(tokenId) {
