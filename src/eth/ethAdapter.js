@@ -243,7 +243,7 @@ class EthAdapter {
             const tx = await this._trySend(
                 CONTRACT_NAMES.PublicStaking,
                 "safeTransferFrom(address,address,uint256)",
-                [this._getAddressByIndex(0), this.contracts.Lockup.address, tokenId]
+                [await this._getAddressByIndex(0), this.addressesFromFactory[CONTRACT_NAMES.Lockup], tokenId]
             );
             return { tx };
         })
