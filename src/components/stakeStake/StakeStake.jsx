@@ -20,13 +20,13 @@ export function StakeStake() {
     const dispatch = useDispatch();
     const [stakeAmt, setStakeAmt] = React.useState('');
     const [waiting, setWaiting] = React.useState(false);
-    const [errorLocking, setErrorLocking] = React.useState(false);
     const [status, setStatus] = React.useState({});
-    const [stakeSuccess, setStakeSuccess] = React.useState(false);
     const [allowanceMet, setAllowanceMet] = React.useState(false);
     const [hash, setHash] = React.useState('');
     const [multipleTx, setMultipleTx] = React.useState('');
     const [aboutModalOpen, setAboutModalOpen] = React.useState(false);
+
+    const [currentContent, setCurrentContent] = React.useState('staking')
 
     React.useEffect(() => {
         setStakeAmt('');
@@ -115,7 +115,7 @@ export function StakeStake() {
             }
 
             setWaiting(false);
-            setStakeSuccess(true)
+            setCurrentContent('stakeSuccess')
         } catch (exception) {
             setStatus({
                 error: true,
@@ -127,7 +127,6 @@ export function StakeStake() {
 
     const handleLocking = async () => {
         try {
-            setErrorLocking(false)
             setWaiting(true);
             setHash('');
             setMultipleTx('');
@@ -146,13 +145,14 @@ export function StakeStake() {
                 });
             }
 
+            setCurrentContent('lockSuccess')
             setWaiting(false);
         } catch (exception) {
             setStatus({
                 error: true,
                 message: exception || "There was a problem with your request, please verify or try again later"
             });
-            setErrorLocking(true)
+            setCurrentContent('errorLocking')
             setWaiting(false);
         }
     }
@@ -164,7 +164,7 @@ export function StakeStake() {
         if (!status?.message || status?.error) return <></>
 
         return (
-            <Header>
+            <Header className="mt-6">
                 <div className="mb-4 text-base">
                     {status?.message}
                 </div>
@@ -189,12 +189,11 @@ export function StakeStake() {
         )
     }
 
-    function renderStakeSuccessButtons() {
-        if (!stakeSuccess || errorLocking) return <></>;
+    function renderStakeSuccess() {
+        if (currentContent != 'stakeSuccess') return <></>;
 
         return (
             <div className="mt-4">
-                {renderMessage()}
 
                 <div className="flex">
                     <div>
@@ -213,7 +212,7 @@ export function StakeStake() {
     }
 
     function renderRetryLockNftButton() {
-        if (!errorLocking) return <></>;
+        if (currentContent != 'errorLocking') return <></>;
 
         return (
             <div>
@@ -226,12 +225,10 @@ export function StakeStake() {
     }
 
     const Staking = () => {
-        if (stakeSuccess) return <></>;
+        if (currentContent != "staking") return <></>;
 
         return (
             <>
-                {renderMessage()}
-
                 <Header>Stake your ALCA
                     <Header.Subheader>
                         {alcaBalance} available for staking
@@ -281,7 +278,6 @@ export function StakeStake() {
         )
     }
 
-
     return (<>
 
         <Modal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}>
@@ -300,12 +296,14 @@ export function StakeStake() {
                 </Dimmer>
             )}
 
+            {renderMessage()}
+
             <Grid.Column width={16}>
                 <Staking />
             </Grid.Column>
 
             <Grid.Column width={16}>
-                {renderStakeSuccessButtons()}
+                {renderStakeSuccess()}
 
                 {renderRetryLockNftButton()}
             </Grid.Column>
