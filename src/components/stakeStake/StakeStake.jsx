@@ -6,15 +6,18 @@ import { APPLICATION_ACTIONS } from "redux/actions";
 import { Grid, Header, Input, Button, Dimmer, Loader, Message, Modal } from "semantic-ui-react";
 import { TOKEN_TYPES } from "redux/constants";
 import { LOCK_APP_URL } from "utils/constants";
+import { useCookies } from "react-cookie";
+import { sha256 } from "ethers/lib/utils";
 
 const DECIMALS = 18;
 const ETHERSCAN_URL = process.env.REACT_APP__ETHERSCAN_TX_URL || "https://etherscan.io/tx/";
 
 export function StakeStake() {
-    const { tokenId, alcaBalance, alcaStakeAllowance } = useSelector(state => ({
+    const { connectedAddress, tokenId, alcaBalance, alcaStakeAllowance } = useSelector(state => ({
         tokenId: state.application.stakedPosition.tokenId,
         alcaBalance: state.application.balances.alca,
-        alcaStakeAllowance: state.application.allowances.alcaStakeAllowance
+        alcaStakeAllowance: state.application.allowances.alcaStakeAllowance,
+        connectedAddress: state.application.connectedAddress
     }))
 
     const dispatch = useDispatch();
@@ -27,6 +30,8 @@ export function StakeStake() {
     const [aboutModalOpen, setAboutModalOpen] = React.useState(false);
 
     const [currentContent, setCurrentContent] = React.useState('staking')
+    const [cookies, setCookie] = useCookies([]);
+
 
     React.useEffect(() => {
         setStakeAmt('');
@@ -116,6 +121,7 @@ export function StakeStake() {
 
             setWaiting(false);
             setCurrentContent('stakeSuccess')
+            setCookie('lockOptionShown', sha256(connectedAddress))
         } catch (exception) {
             setStatus({
                 error: true,
@@ -178,6 +184,8 @@ export function StakeStake() {
     }
 
     function renderLockNftButton(text) {
+        if (cookies.lockOptionShown == sha256(connectedAddress)) return <></>
+
         text = text || "Lock My Stake"
 
         return (
