@@ -194,7 +194,6 @@ export function StakeStake() {
 
         return (
             <div className="mt-4">
-
                 <div className="flex">
                     <div>
                         <Button
@@ -224,7 +223,7 @@ export function StakeStake() {
         )
     }
 
-    const Staking = () => {
+    function renderStaking() {
         if (currentContent != "staking") return <></>;
 
         return (
@@ -299,7 +298,7 @@ export function StakeStake() {
             {renderMessage()}
 
             <Grid.Column width={16}>
-                <Staking />
+                {renderStaking()}
             </Grid.Column>
 
             <Grid.Column width={16}>
