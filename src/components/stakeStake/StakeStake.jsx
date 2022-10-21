@@ -22,6 +22,7 @@ export function StakeStake() {
     const [waiting, setWaiting] = React.useState(false);
     const [errorLocking, setErrorLocking] = React.useState(false);
     const [status, setStatus] = React.useState({});
+    const [stakeSuccess, setStakeSuccess] = React.useState(false);
     const [allowanceMet, setAllowanceMet] = React.useState(false);
     const [hash, setHash] = React.useState('');
     const [multipleTx, setMultipleTx] = React.useState('');
@@ -114,6 +115,7 @@ export function StakeStake() {
             }
 
             setWaiting(false);
+            setStakeSuccess(true)
         } catch (exception) {
             setStatus({
                 error: true,
@@ -162,17 +164,15 @@ export function StakeStake() {
         if (!status?.message || status?.error) return <></>
 
         return (
-            <div className="bg-[#245979] p-4 rounded-md">
-                <Header>
-                    <div className="mb-4 text-base text-[#fff]">
-                        {status?.message}
-                    </div>
+            <Header>
+                <div className="mb-4 text-base">
+                    {status?.message}
+                </div>
 
-                    <Header.Subheader className="text-[#fff]">
-                        You can check the transaction hash below {hash}
-                    </Header.Subheader>
-                </Header>
-            </div>
+                <Header.Subheader>
+                    You can check the transaction hash below {hash}
+                </Header.Subheader>
+            </Header>
         )
 
     }
@@ -190,19 +190,23 @@ export function StakeStake() {
     }
 
     function renderStakeSuccessButtons() {
-        if (!status?.message || status?.error) return <></>;
+        if (!stakeSuccess || errorLocking) return <></>;
 
         return (
-            <div className="flex mt-4">
-                <div>
-                    <Button
-                        content={"View on Etherscan"}
-                        secondary
-                        onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
-                    />
-                </div>
-                <div className="ml-4">
-                    {renderLockNftButton()}
+            <div className="mt-4">
+                {renderMessage()}
+
+                <div className="flex">
+                    <div>
+                        <Button
+                            content={"View on Etherscan"}
+                            secondary
+                            onClick={() => window.open(`${ETHERSCAN_URL}${hash}`, '_blank').focus()}
+                        />
+                    </div>
+                    <div className="ml-4">
+                        {renderLockNftButton()}
+                    </div>
                 </div>
             </div>
         )
@@ -212,13 +216,18 @@ export function StakeStake() {
         if (!errorLocking) return <></>;
 
         return (
-            <div className="flex mt-6">
-                {renderLockNftButton("Retry Lock My Stake")}
+            <div>
+                <div>There was an error locking your Stake. Please try again.</div>
+                <div className="mt-3">
+                    {renderLockNftButton("Retry Lock My Stake")}
+                </div>
             </div>
         )
     }
 
-    const StakingHeader = () => {
+    const Staking = () => {
+        if (stakeSuccess) return <></>;
+
         return (
             <>
                 {renderMessage()}
@@ -228,8 +237,45 @@ export function StakeStake() {
                         {alcaBalance} available for staking
                     </Header.Subheader>
                 </Header>
+
                 <div className="text-xs font-bold">
                     You will need to sign two transactions to stake your ALCA
+                </div>
+
+                <div>
+                    <Input
+                        placeholder={`Amount to stake`}
+                        value={stakeAmt}
+                        type="text"
+                        inputMode="decimal"
+                        pattern="^[0-9]*[.]?[0-9]*$"
+                        onChange={e => e.target.validity.valid && updateStakeAmt(e.target.value)}
+                        action={{
+                            content: "Max",
+                            onClick: () => { setStakeAmt(alcaBalance) }
+                        }}
+                    />
+                </div>
+
+                <div>
+                    <Button
+                        className="mt-4"
+                        secondary
+                        content={
+                            (!alcaStakeAllowance || !stakeAmt)
+                                ? "Enter an amount"
+                                : allowanceMet ? "Stake ALCA" : `Stake ${stakeAmt} ALCA`
+                        }
+                        onClick={handleStaking}
+                        disabled={!stakeAmt || ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))}
+                    />
+
+                    <div
+                        className="cursor-pointer text-xs mt-4 underline"
+                        onClick={() => setAboutModalOpen(true)}
+                    >
+                        About ALCA Staked rewards
+                    </div>
                 </div>
             </>
         )
@@ -255,50 +301,10 @@ export function StakeStake() {
             )}
 
             <Grid.Column width={16}>
-                <StakingHeader />
+                <Staking />
             </Grid.Column>
 
             <Grid.Column width={16}>
-                {(!status?.message || status.error) && (
-                    <>
-                        <div>
-                            <Input
-                                placeholder={`Amount to stake`}
-                                value={stakeAmt}
-                                type="text"
-                                inputMode="decimal"
-                                pattern="^[0-9]*[.]?[0-9]*$"
-                                onChange={e => e.target.validity.valid && updateStakeAmt(e.target.value)}
-                                action={{
-                                    content: "Max",
-                                    onClick: () => { setStakeAmt(alcaBalance) }
-                                }}
-                            />
-                        </div>
-
-                        <div>
-                            <Button
-                                className="mt-4"
-                                secondary
-                                content={
-                                    (!alcaStakeAllowance || !stakeAmt)
-                                        ? "Enter an amount"
-                                        : allowanceMet ? "Stake ALCA" : `Stake ${stakeAmt} ALCA`
-                                }
-                                onClick={handleStaking}
-                                disabled={!stakeAmt || ethers.utils.parseUnits(stakeAmt || "0", DECIMALS).gt(ethers.utils.parseUnits(alcaBalance || "0", DECIMALS))}
-                            />
-
-                            <div
-                                className="cursor-pointer text-xs mt-4 underline"
-                                onClick={() => setAboutModalOpen(true)}
-                            >
-                                About ALCA Staked rewards
-                            </div>
-                        </div>
-                    </>
-                )}
-
                 {renderStakeSuccessButtons()}
 
                 {renderRetryLockNftButton()}
