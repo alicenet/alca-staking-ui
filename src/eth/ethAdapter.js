@@ -451,7 +451,6 @@ class EthAdapter {
      * @returns { Object }
      */
     async unstakingPosition(tokenId) {
-        console.log(this.contracts)
         return await this._try(async () => {
             const tx = await this._trySend(CONTRACT_NAMES.PublicStaking, "burn", [tokenId]);
             return tx;
