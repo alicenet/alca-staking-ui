@@ -245,7 +245,7 @@ class EthAdapter {
                 "safeTransferFrom(address,address,uint256)",
                 [await this._getAddressByIndex(0), this.addressesFromFactory[CONTRACT_NAMES.Lockup], tokenId]
             );
-            return { tx };
+            return tx;
         })
     }
 
