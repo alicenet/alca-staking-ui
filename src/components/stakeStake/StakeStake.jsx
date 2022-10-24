@@ -285,6 +285,14 @@ export function StakeStake() {
         )
     }
 
+    function renderLockSuccess() {
+        if (currentContent != 'lockSuccess') return <></>
+
+        return (
+            <div>Visited <a className="underline" href={LOCK_APP_URL} target="_blank">the Lock App</a> for more details.</div>
+        )
+    }
+
     return (<>
 
         <Modal open={aboutModalOpen} onClose={() => setAboutModalOpen(false)}>
@@ -310,6 +318,8 @@ export function StakeStake() {
             </Grid.Column>
 
             <Grid.Column width={16}>
+                {renderLockSuccess()}
+
                 {renderStakeSuccess()}
 
                 {renderRetryLockNftButton()}
