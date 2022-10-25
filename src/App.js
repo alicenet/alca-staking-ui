@@ -48,6 +48,15 @@ function App() {
         )
     };
 
+    // Catch production render
+    if (process.env.REACT_APP__ENV === "PRODUCTION" && process.env.REACT_APP__ISPRODLIVE === "FALSE") {
+        return (
+            <Container fluid className="flex justify-center items-center mt-10 text-xl">
+                <a href="https://alice.net" rel="no-opener no-referrer">https://alice.net</a>
+            </Container>
+        )
+    }
+
     return (
 
         <Container fluid className="">
