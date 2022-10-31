@@ -46,7 +46,7 @@ export function StakeUnstake() {
         } catch (exception) {
             setStatus({
                 error: true,
-                message: exception || "There was a problem with your request, please verify or try again later"
+                message: exception.toString() || "There was a problem with your request, please verify or try again later"
             });
             setWaiting(false);
         }
@@ -124,7 +124,7 @@ export function StakeUnstake() {
     return (
         <Grid padded >
 
-            {stakedAlca && (
+            {Boolean(stakedAlca) && (
                 <div className="font-bold text-sm absolute left-[24px] -top-[54px] p-3 bg-blue-50 text-blue-500 border-r-blue-400 rounded">
                     <Icon name="warning sign" className='mr-4'/>
                     {stakedAlca} ALCA already staked!
